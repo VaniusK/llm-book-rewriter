@@ -1,6 +1,9 @@
 /venv
 /output_books
-*.fb2
-*.zip
 /__pycache__
 /.idea
+/build
+/dist
+*.fb2
+*.zip
+*.exe
