@@ -1,5 +1,5 @@
 {
-    "gemini_api_key": "AIzaSyBSakeZ-FJL-_Z_m6cMxTVs7wre3K9foFk",
+    "gemini_api_key": "YOUR_KEY",
     "model_name": "models/gemini-2.0-flash",
     "chunk_size": 8000,
     "output_dir": "output_books",
