@@ -2,6 +2,8 @@
 
 # LLM Book Rewriter
 
+![Alt text](https://imgur.com/a/FT73VWY "Пример 1")
+
 [Go to English](#english)
 
 ## 📖 Описание
