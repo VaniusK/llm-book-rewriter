@@ -1,3 +1,5 @@
+<a name="Русский"></a>
+
 # LLM Book Rewriter
 
 [Go to English](#english)
@@ -57,7 +59,6 @@ This program is designed to assist authors and editors in proofreading and rewri
 *   **Improve style and grammar:** LLM can suggest text improvements and correct spelling and punctuation errors.
 *   **Paraphrase text:** If you need to change the wording, LLM can offer alternative options while preserving the meaning.
 *   **Adapt the text for different audiences:** LLM can simplify or complicate the text depending on the target audience.
-*   **Optimize text for search engines (SEO):** LLM can suggest using keywords and phrases to improve the book's visibility in search engines.
 
 **Important Note:**
 
