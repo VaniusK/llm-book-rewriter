@@ -53,7 +53,6 @@ def generate_with_gemini(client, model, prompt, text_chunk):
 2. Выведите только обработанный текстовый фрагмент, избегайте добавления каких-либо дополнительных вводных или заключительных утверждений.
 3. Не добавляйте/не удаляйте/не изменяйте пустые символы (разрывы строк, пробелы, табуляции и т. д.). Сохраняйте их в том виде, в каком они есть, включая края, перед тегами и т. д.
 4. Не добавляйте/не удаляйте/не изменяйте теги.
-5. Особое внимание уделяй сложным случаям("Также/так же, деепричастные и причастные обороты и др.)
 """
 
     safety_settings = [
@@ -79,7 +78,7 @@ def generate_with_gemini(client, model, prompt, text_chunk):
         contents=[full_prompt],
         config=genai_types.GenerateContentConfig(
             safety_settings=safety_settings,
-            temperature=1
+            temperature=0
         )
     )
     return response.text if response.text else ""
@@ -133,7 +132,9 @@ def process_fb2_book(filepath: str, prompt: str, file_manager: FileManager):
 
         except Exception as e:
             print(e)
-            print("Couldn't process the chunk, skipping")
+            print("Couldn't process the chunk, retrying")
+            i -= 1
+            continue
 
         processed_chunks.append(processed_chunk_text)
         file_manager.save_processed_chunks(processed_chunk_text)
