@@ -2,7 +2,7 @@
 
 # LLM Book Rewriter
 
-![Alt text](https://imgur.com/a/FT73VWY "Пример 1")
+![Alt text](https://i.imgur.com/eVjpTQj.png "Пример 1")
 
 [Go to English](#english)
 
