@@ -39,9 +39,9 @@
 
 ## 🚀 Запуск
 
-Положите книги(пока поддерживает только fb2) в одну директорию с кодом, запустите
-Результат будет лежать в папке output_books, обработка одной средней книги(400к символов) занимает около десяти минут
-Если хотите начать обработку заново, очистите файлы processed_chunks.txt и processed_chunks_count.txt
+*   Положите книги(пока поддерживает только fb2) в одну директорию с кодом, запустите
+*   Результат будет лежать в папке output_books, обработка одной средней книги(400к символов) занимает около десяти минут
+*   Если хотите начать обработку заново, очистите файлы processed_chunks.txt и processed_chunks_count.txt
 ---
 
 <a name="english"></a>
@@ -88,6 +88,6 @@ To run the program, you need a Google AI Studio API key. Here's how to get it:
 
 ## 🚀 Running
 
-Put the books (currently only supports fb2 format) in the same directory as the code, then run it.
-The output will be in the "output_books" folder. Processing one average book (400k characters) takes about ten minutes.
-If you want to start processing from scratch, clear the processed_chunks.txt and processed_chunks_count.txt files.
+*   Put the books (currently only supports fb2 format) in the same directory as the code, then run it.
+*   The output will be in the "output_books" folder. Processing one average book (400k characters) takes about ten minutes.
+*   If you want to start processing from scratch, clear the processed_chunks.txt and processed_chunks_count.txt files.
