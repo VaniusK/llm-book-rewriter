@@ -46,7 +46,7 @@
 
 <a name="english"></a>
 
-# ✨ LLM Book Refiner ✨
+# LLM Book Rewriter
 
 [Go to Русский](#русский)
 
