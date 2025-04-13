@@ -4,6 +4,7 @@
 /.idea
 /build
 /dist
+config.json
 *.fb2
 *.zip
 *.exe

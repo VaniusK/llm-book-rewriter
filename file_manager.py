@@ -48,26 +48,26 @@ class FileManager:
         return all_text_with_tags
 
     def save_processed_chunks(self, chunk):
-        with open(self.processed_chunks_file, "a") as file:
+        with open(self.processed_chunks_file, "a", encoding="utf-8") as file:
             file.write(chunk)
 
     def clear_processed_chunks(self):
-        with open(self.processed_chunks_file, "w") as file:
+        with open(self.processed_chunks_file, "w", encoding="utf-8") as file:
             file.write("")
 
     def load_processed_chunks(self):
         if not os.path.exists(self.processed_chunks_file):
             return ""
-        with open(self.processed_chunks_file, "r") as file:
+        with open(self.processed_chunks_file, "r", encoding="utf-8") as file:
             return file.read()
 
     def save_processed_chunks_count(self, chunk_count):
-        with open(self.processed_chunks_count_file, "w") as file:
+        with open(self.processed_chunks_count_file, "w", encoding="utf-8") as file:
             file.write(str(chunk_count))
 
     def load_processed_chunks_count(self):
         if not os.path.exists(self.processed_chunks_count_file):
             return 0
-        with open(self.processed_chunks_count_file, "r") as file:
+        with open(self.processed_chunks_count_file, "r", encoding="utf-8") as file:
             f = file.read()
             return int(f) if f else -1
