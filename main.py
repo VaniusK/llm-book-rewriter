@@ -45,14 +45,15 @@ def generate_with_gemini(client, model, prompt, text_chunk):
 
     full_prompt = f"""{prompt}
 
-**Text Chunk:**
+**Фрагмент текста:**
 {text_chunk}
 
-**Instructions:**
-1. Perform the task specified in the main prompt on the provided text chunk.
-2. Output only the processed text chunk, avoid adding any extra introductory or concluding statements.
-3. Do not add/remove/modify empty symbols(line breaks, whitespaces, tabs, etc). Keep them as they are, including edges, before tags, etc.
-4. Do not add/remove/modify the tags.
+**Инструкции:**
+1. Выполните задачу, указанную в основном запросе, над предоставленным текстовым фрагментом.
+2. Выведите только обработанный текстовый фрагмент, избегайте добавления каких-либо дополнительных вводных или заключительных утверждений.
+3. Не добавляйте/не удаляйте/не изменяйте пустые символы (разрывы строк, пробелы, табуляции и т. д.). Сохраняйте их в том виде, в каком они есть, включая края, перед тегами и т. д.
+4. Не добавляйте/не удаляйте/не изменяйте теги.
+5. Особое внимание уделяй сложным случаям("Также/так же, деепричастные и причастные обороты и др.)
 """
 
     safety_settings = [

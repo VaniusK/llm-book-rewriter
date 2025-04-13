@@ -28,6 +28,8 @@
 
 1.  После получения API-ключа, создайте файл `config.json` в корневой директории проекта (если его еще нет).
 2.  Внесите в файл `config.json` ваш API-ключ в следующем формате:
+3.  (Опционально) Измените chunk_size, он отвечает за размер текста, который единовременно будет передан в модель. Низкие значения(около 1000) улучшают качество, но ведут к увеличению числа запросов(бесплатный лимит - 1500 запросов в день)
+4.  (Опционально) Измените main_prompt - инструкцию нейросети. По умолчанию он вычитывает текст, но можно задать любую цель: Переписать в другом стиле, заменить всех котов на собак и тому подобное
 
 ```json
 {
@@ -76,6 +78,7 @@ To run the program, you need a Google AI Studio API key. Here's how to get it:
 
 1.  After obtaining the API key, create a `config.json` file in the root directory of the project (if it doesn't already exist).
 2.  Enter your API key into the `config.json` file in the following format:
+3.  (Optional) As you can see, in both config.json and main.py prompts are in Russian. From my tests, it can drastically affect output quality, so you should translate it to the language of your book
 
 ```json
 {

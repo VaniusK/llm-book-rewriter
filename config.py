@@ -5,7 +5,7 @@ import os
 def load_config(config_file="config.json"):
     if not os.path.exists(config_file):
         raise FileNotFoundError(f"Config file not found: {config_file}")
-    with open(config_file, "r") as f:
+    with open(config_file, "r", encoding="utf-8") as f:
         config_data = json.load(f)
     return config_data
 

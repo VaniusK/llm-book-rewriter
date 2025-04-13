@@ -3,5 +3,5 @@
     "model_name": "models/gemini-2.0-flash",
     "chunk_size": 8000,
     "output_dir": "output_books",
-    "main_prompt": "You are a professional rewriter. Rewrite the following text fragment according to the client's instructions below.\n\nClient's instructions:\n1. Correct any spelling mistakes and typos.\n2. Correct punctuation.\n3. Do not change any names/words you aren't sure about\n4. Do not change anything else."
+    "main_prompt": "Ты профессиональный переписчик. Перепиши следующий фрагмент текста в соответствии с инструкциями клиента ниже.\n\nИнструкции клиента:\n1. Исправь все орфографические ошибки и опечатки.\n2. Исправь пунктуационные и грамматические ошибки, особенно с причастными и деепричастными оборотами, однородными определениями.\n3. Не меняй никакие имена/слова, в которых ты не уверен.\n4. Больше ничего не меняй."
 }
