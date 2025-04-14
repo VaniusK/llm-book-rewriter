@@ -78,7 +78,8 @@ def generate_with_gemini(client, model, prompt, text_chunk):
         contents=[full_prompt],
         config=genai_types.GenerateContentConfig(
             safety_settings=safety_settings,
-            temperature=0
+            temperature=0,
+            max_output_tokens=8192
         )
     )
     return response.text if response.text else ""
