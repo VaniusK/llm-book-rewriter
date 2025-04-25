@@ -1,0 +1,124 @@
+from imports import *
+from config import config
+from file_manager import FileManager
+from llm import LLM
+
+class BookProcessor:
+    """
+    A class for processing books, primarily in FB2 format, by splitting them into chunks,
+    processing each chunk with an LLM, and reassembling the processed chunks.
+    """
+    def __init__(self, llm_provider: str):
+        self.llm = LLM(llm_provider).llm
+        os.makedirs(config["processing"]["output_dir"], exist_ok=True)
+        self.file_manager = FileManager()
+
+    def split_into_chunks(self, text, chunk_size: int) -> list[str]:
+        """Splits text into chunks of(roughly) given size, considering tag endings."""
+        chunks = []
+        current_chunk = ""
+        current_chunk_size = 0
+        processed_size = 0
+
+        for char in text:
+            segment_size = 1
+            current_chunk += char
+            current_chunk_size += segment_size
+
+            if current_chunk_size >= chunk_size and char == ">" and len(text) - processed_size >= chunk_size // 10:
+                chunks.append(current_chunk)
+                current_chunk = ""
+                processed_size += current_chunk_size
+                current_chunk_size = 0
+
+        if current_chunk:
+            chunks.append(current_chunk)
+
+        return chunks
+
+    def format_response(self, original_chunk: str, processed_chunk: str) -> str:
+        """Ensures correct special symbol(\n, \t, whitespace, etc.) usage on chunk edges
+        by copying them from original chunk to processed one"""
+        original_start_whitespace = ""
+        original_end_whitespace = ""
+
+        i = 0
+        while i < len(original_chunk) and original_chunk[i].isspace():
+            original_start_whitespace += original_chunk[i]
+            i += 1
+
+        i = len(original_chunk) - 1
+        while i >= 0 and original_chunk[i].isspace():
+            original_end_whitespace = original_chunk[i] + original_end_whitespace
+            i -= 1
+
+        formatted_chunk = original_start_whitespace + processed_chunk.strip() + original_end_whitespace
+        return formatted_chunk
+
+    def validate_response(self, original_chunk: str, processed_chunk: str) -> bool:
+        """
+        Validates if the processed chunk maintains the same number of tags as the original chunk.
+        """
+        return original_chunk.count("<") == processed_chunk.count("<") and original_chunk.count(
+            ">") == processed_chunk.count(">")
+
+    def _heuristic_remove_commas(self, text):
+        return text.replace(",", "")
+
+    def apply_heuristics(self, prompt):
+        """Applies heuristics to the prompt based on the configuration."""
+
+
+        for heuristic_name, enabled in config['heuristics'].items():
+            if enabled:
+                method_name = f"_heuristic_{heuristic_name}"
+                heuristic_function = getattr(self, method_name, None)
+
+                if heuristic_function and callable(heuristic_function):
+                    prompt = heuristic_function(prompt)
+                else:
+                    print("Couldn't apply the heuristic")
+        return prompt
+
+    def process_fb2_book(self, filepath: str):
+        """Processes fb2 book by modifying each chunk with LLM"""
+        print(f"Processing: {filepath}")
+        book_name = filepath[:-4]
+        output_filepath = os.path.join(config["processing"]["output_dir"], f"{book_name}_rewritten.fb2")
+
+        segments = self.file_manager.extract_text_and_tags_from_fb2(filepath)
+        chunks = self.split_into_chunks(segments, config["processing"]["chunk_size"])
+
+        processed_chunks = [self.file_manager.load_processed_chunks()]
+        chunks_processed = self.file_manager.load_processed_chunks_count()
+        i = chunks_processed + 1
+        while i < len(chunks):
+            chunk = chunks[i]
+            start_time = time.time()
+            print(f"  Processing chunk {i + 1}/{len(chunks)}...")
+            processed_chunk_text = chunk
+
+            try:
+                full_prompt = config['prompt']
+                full_prompt = full_prompt.format(text_chunk=self.apply_heuristics(chunk))
+                processed_chunk_text = self.llm.generate(full_prompt)
+                processed_chunk_text = self.format_response(chunk, processed_chunk_text)
+                assert self.validate_response(chunk, processed_chunk_text)
+            except Exception as e:
+                print(e)
+                if config["processing"]["retry_if_failed"]:
+                    print("Couldn't process the chunk, retrying")
+                    continue
+                else:
+                    print("Couldn't process the chunk, skipping")
+
+            processed_chunks.append(processed_chunk_text)
+            self.file_manager.save_processed_chunks(processed_chunk_text)
+            self.file_manager.save_processed_chunks_count(i)
+            print(f"Chunk processed in {time.time() - start_time} seconds")
+            self.file_manager.insert_text_into_fb2(filepath, ''.join(processed_chunks), output_filepath)
+            print(f"Saved current progress to {output_filepath}")
+            i += 1
+        self.file_manager.clear_processed_chunks()
+        self.file_manager.save_processed_chunks_count(-1)
+        print(f"Processed {filepath} in {len(chunks)} chunks")

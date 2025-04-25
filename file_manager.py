@@ -1,6 +1,4 @@
-import os
-from lxml import etree
-import re
+from imports import *
 
 class FileManager:
     def __init__(self, processed_chunks_file="processed_chunks.txt", processed_chunks_count_file="processed_chunks_count.txt"):
@@ -34,9 +32,12 @@ class FileManager:
             text_with_tags += f"<{tag_name}>"
             if element.text:
                 text_with_tags += f"{element.text}"
+            child_count = 0
             for child in element:
+                child_count += 1
                 text_with_tags += process_element(child, depth + 1)
-            text_with_tags += f"</{tag_name}>"
+            if child_count or element.text:
+                text_with_tags += f"</{tag_name}>"
             if element.tail:
                 text_with_tags += f"{element.tail}"
 
