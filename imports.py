@@ -7,9 +7,5 @@ from lxml import etree
 import re
 import yaml
 import importlib
-from typing import List, Dict
-import ebooklib
-from ebooklib import epub
-from bs4 import BeautifulSoup
-import zipfile
-import shutil
+from typing import List, Dict, Tuple
+import docx

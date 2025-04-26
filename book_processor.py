@@ -41,23 +41,37 @@ class BookProcessor:
         return chunks
 
     def format_response(self, original_chunk: str, processed_chunk: str) -> str:
-        """Ensures correct special symbol(\n, \t, whitespace, etc.) usage on chunk edges
-        by copying them from original chunk to processed one"""
-        original_start_whitespace = ""
-        original_end_whitespace = ""
+        """
+        Ensures correct special symbol (\n, \t, whitespace, etc.) usage on chunk edges and between <RUN{X}/> tags
+        by copying them from the original chunk to the processed one.
+        """
+        run_tag_pattern = r'(<RUN\d+/>)'
 
-        i = 0
-        while i < len(original_chunk) and original_chunk[i].isspace():
-            original_start_whitespace += original_chunk[i]
-            i += 1
+        original_parts = re.split(run_tag_pattern, original_chunk)
+        processed_parts = re.split(run_tag_pattern, processed_chunk)
 
-        i = len(original_chunk) - 1
-        while i >= 0 and original_chunk[i].isspace():
-            original_end_whitespace = original_chunk[i] + original_end_whitespace
-            i -= 1
+        if len(original_parts) != len(processed_parts):
+            return processed_chunk
 
-        formatted_chunk = original_start_whitespace + processed_chunk.strip() + original_end_whitespace
-        return formatted_chunk
+        result_parts = []
+        for i, original_part in enumerate(original_parts):
+            processed_part = processed_parts[i]
+
+            if re.match(run_tag_pattern, original_part) or not original_part:
+                result_parts.append(processed_part)
+            else:
+                leading_whitespace_match = re.match(r'^(\s*)', original_part)
+                leading_whitespace = leading_whitespace_match.group(1) if leading_whitespace_match else ""
+
+                trailing_whitespace_match = re.search(r'(\s*)$', original_part)
+                trailing_whitespace = trailing_whitespace_match.group(1) if trailing_whitespace_match else ""
+
+                core_content = processed_part.strip()
+
+                formatted_part = leading_whitespace + core_content + trailing_whitespace
+                result_parts.append(formatted_part)
+
+        return "".join(result_parts)
 
     def validate_response(self, original_chunk: str, processed_chunk: str) -> bool:
         """
@@ -81,7 +95,7 @@ class BookProcessor:
                 if heuristic_function and callable(heuristic_function):
                     prompt = heuristic_function(prompt)
                 else:
-                    print("Couldn't apply the heuristic")
+                    print(f"Couldn't apply the {heuristic_name} heuristic")
         return prompt
 
     def process_book(self, filepath: str):

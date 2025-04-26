@@ -25,9 +25,9 @@ class Google(BaseLLM):
         ]
         self.model_config = genai_types.GenerateContentConfig(
             safety_settings=self.safety_settings,
-            temperature=0,
+            temperature=1,
             max_output_tokens=8192,
-            top_p=0,
+            top_p=0.95,
             top_k=64
         )
 
