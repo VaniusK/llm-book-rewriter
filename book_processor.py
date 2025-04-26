@@ -12,9 +12,13 @@ class BookProcessor:
         self.llm = LLM(llm_provider).llm
         os.makedirs(config["processing"]["output_dir"], exist_ok=True)
         self.file_handler = FileHandler(file_type).file_handler
+        self.book_extension = file_type
 
     def split_into_chunks(self, text, chunk_size: int) -> list[str]:
         """Splits text into chunks of(roughly) given size, considering tag endings."""
+        ending_symbols = [".", "!", "?"]
+        if ">" in text:
+            ending_symbols = [">"]
         chunks = []
         current_chunk = ""
         current_chunk_size = 0
@@ -25,7 +29,7 @@ class BookProcessor:
             current_chunk += char
             current_chunk_size += segment_size
 
-            if current_chunk_size >= chunk_size and char == ">" and len(text) - processed_size >= chunk_size // 10:
+            if current_chunk_size >= chunk_size and char in ending_symbols and len(text) - processed_size >= chunk_size // 10:
                 chunks.append(current_chunk)
                 current_chunk = ""
                 processed_size += current_chunk_size
@@ -80,11 +84,11 @@ class BookProcessor:
                     print("Couldn't apply the heuristic")
         return prompt
 
-    def process_fb2_book(self, filepath: str):
-        """Processes fb2 book by modifying each chunk with LLM"""
+    def process_book(self, filepath: str):
+        """Processes book by modifying each chunk with LLM"""
         print(f"Processing: {filepath}")
-        book_name = filepath[:-4]
-        output_filepath = os.path.join(config["processing"]["output_dir"], f"{book_name}_rewritten.fb2")
+        book_name = filepath[:filepath.rfind(".")]
+        output_filepath = os.path.join(config["processing"]["output_dir"], f"{book_name}_rewritten.{self.book_extension}")
 
         segments = self.file_handler.extract_text(filepath)
         chunks = self.split_into_chunks(segments, config["processing"]["chunk_size"])
