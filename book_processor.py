@@ -1,17 +1,17 @@
 from imports import *
 from config import config
-from file_manager import FileManager
+from file_handler import FileHandler
 from llm import LLM
 
 class BookProcessor:
     """
-    A class for processing books, primarily in FB2 format, by splitting them into chunks,
+    A class for processing books by splitting them into chunks,
     processing each chunk with an LLM, and reassembling the processed chunks.
     """
-    def __init__(self, llm_provider: str):
+    def __init__(self, llm_provider: str, file_type: str):
         self.llm = LLM(llm_provider).llm
         os.makedirs(config["processing"]["output_dir"], exist_ok=True)
-        self.file_manager = FileManager()
+        self.file_handler = FileHandler(file_type).file_handler
 
     def split_into_chunks(self, text, chunk_size: int) -> list[str]:
         """Splits text into chunks of(roughly) given size, considering tag endings."""
@@ -86,11 +86,11 @@ class BookProcessor:
         book_name = filepath[:-4]
         output_filepath = os.path.join(config["processing"]["output_dir"], f"{book_name}_rewritten.fb2")
 
-        segments = self.file_manager.extract_text_and_tags_from_fb2(filepath)
+        segments = self.file_handler.extract_text(filepath)
         chunks = self.split_into_chunks(segments, config["processing"]["chunk_size"])
 
-        processed_chunks = [self.file_manager.load_processed_chunks()]
-        chunks_processed = self.file_manager.load_processed_chunks_count()
+        processed_chunks = [self.file_handler.load_processed_chunks()]
+        chunks_processed = self.file_handler.load_processed_chunks_count()
         i = chunks_processed + 1
         while i < len(chunks):
             chunk = chunks[i]
@@ -113,12 +113,12 @@ class BookProcessor:
                     print("Couldn't process the chunk, skipping")
 
             processed_chunks.append(processed_chunk_text)
-            self.file_manager.save_processed_chunks(processed_chunk_text)
-            self.file_manager.save_processed_chunks_count(i)
+            self.file_handler.save_processed_chunks(processed_chunk_text)
+            self.file_handler.save_processed_chunks_count(i)
             print(f"Chunk processed in {time.time() - start_time} seconds")
-            self.file_manager.insert_text_into_fb2(filepath, ''.join(processed_chunks), output_filepath)
+            self.file_handler.insert_text(filepath, ''.join(processed_chunks), output_filepath)
             print(f"Saved current progress to {output_filepath}")
             i += 1
-        self.file_manager.clear_processed_chunks()
-        self.file_manager.save_processed_chunks_count(-1)
+        self.file_handler.clear_processed_chunks()
+        self.file_handler.save_processed_chunks_count(-1)
         print(f"Processed {filepath} in {len(chunks)} chunks")

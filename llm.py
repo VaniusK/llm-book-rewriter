@@ -12,14 +12,17 @@ class LLM:
         self.llm = self.get_llm()
 
     def get_llm(self):
+        module_name = "llm_providers." + self.provider
+        class_name = self.provider.capitalize()
+
         try:
-            module = importlib.import_module("llm_providers." + self.provider)
-            llm_class = getattr(module, self.provider.capitalize())
+            module = importlib.import_module(module_name)
+            llm_class = getattr(module, class_name)
             llm_instance = llm_class(config[self.provider]['model'], config[self.provider]['api_key'])
             return llm_instance
         except ImportError:
-            raise ImportError(f"Could not import module llm_providers.{self.provider}")
+            raise ImportError(f"Could not import module {module_name}")
         except AttributeError:
-            raise AttributeError(f"Class {self.provider.capitalize()} not found in module llm_providers.{self.provider}")
+            raise AttributeError(f"Class {class_name} not found in module {module_name}")
         except Exception as e:
              raise Exception(f"An error occurred while creating LLM instance: {e}")

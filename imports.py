@@ -7,3 +7,4 @@ from lxml import etree
 import re
 import yaml
 import importlib
+from typing import List, Dict
