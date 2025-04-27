@@ -20,13 +20,11 @@ class DOCXFileHandler(BaseFileHandler):
         try:
             document = docx.Document(filepath)
             text_for_llm_parts = []
-            run_map: Dict[str, Run] = {}
             run_index = 1
 
             for para in document.paragraphs:
                 for run in para.runs:
                     tag = self._generate_tag(run_index)
-                    run_map[tag] = run
                     text_for_llm_parts.append(tag + run.text)
                     run_index += 1
 
