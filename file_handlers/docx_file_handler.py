@@ -42,7 +42,6 @@ class DOCXFileHandler(BaseFileHandler):
         """Update the text of fragments in the document based on the processed string with tags."""
         try:
             processed_text_with_tags = "".join(processed_chunks)
-            logging.info(processed_text_with_tags)
             document = docx.Document(original_filepath)
             new_run_map: Dict[str, Run] = {}
             run_index = 1
