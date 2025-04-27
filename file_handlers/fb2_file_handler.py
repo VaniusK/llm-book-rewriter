@@ -22,7 +22,7 @@ class FB2FileHandler(BaseFileHandler):
         namespaces = {'fb': 'http://www.gribuser.ru/xml/fictionbook/2.0'}
 
         # Function to recursively process elements
-        def process_element(element, depth=0):
+        def process_element(element: etree.Element, depth: int=0):
             text_with_tags = ""
 
             tag_name = etree.QName(element).localname

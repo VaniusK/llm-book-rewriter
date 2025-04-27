@@ -12,11 +12,8 @@ class FileHandler:
         self.file_type = file_type
         self.file_handler = self.get_file_handler()
 
-    def get_file_handler(self):
-        """
-        returns file_handler class based on file_type
-        :return:
-        """
+    def get_file_handler(self) -> object:
+        """return file_handler class based on file_type"""
         module_name = f"file_handlers.{self.file_type}_file_handler"
         class_name = f"{self.file_type.upper()}FileHandler"
 

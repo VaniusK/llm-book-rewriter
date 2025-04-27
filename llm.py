@@ -11,7 +11,7 @@ class LLM:
         self.provider = provider
         self.llm = self.get_llm()
 
-    def get_llm(self):
+    def get_llm(self) -> object:
         """
         Returns llm class based on provider name.
         """
