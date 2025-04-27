@@ -1,6 +1,7 @@
 import os
 import re
 import time
+import logging
 from config import config
 from file_handler import FileHandler
 from llm import LLM
@@ -13,11 +14,14 @@ class BookProcessor:
     def __init__(self, llm_provider: str, file_type: str):
         self.llm = LLM(llm_provider).llm
         os.makedirs(config["processing"]["output_dir"], exist_ok=True)
+        self.logger = logging.getLogger(__name__)
+
+
         self.file_handler = FileHandler(file_type).file_handler
         self.book_extension = file_type
 
     def split_into_chunks(self, text, chunk_size: int) -> list[str]:
-        """Splits text into chunks of(roughly) given size, considering tag endings."""
+        """Split text into chunks of(roughly) given size, considering tag/sentence endings."""
         ending_symbols = [".", "!", "?"]
         if ">" in text:
             ending_symbols = [">"]
@@ -43,10 +47,7 @@ class BookProcessor:
         return chunks
 
     def format_response(self, original_chunk: str, processed_chunk: str) -> str:
-        """
-        Ensures correct special symbol (\n, \t, whitespace, etc.) usage on chunk edges and between xml tags
-        by copying them from the original chunk to the processed one.
-        """
+        """Ensure correct special symbol usage on chunk edges and between xml tags."""
         tag_pattern = r"(<[^>]+>)"
         original_parts = re.split(tag_pattern, original_chunk)
         processed_parts = re.split(tag_pattern, processed_chunk)
@@ -81,19 +82,15 @@ class BookProcessor:
         return "".join(result_parts)
 
     def validate_response(self, original_chunk: str, processed_chunk: str) -> bool:
-        """
-        Validates if the processed chunk maintains the same number of tags as the original chunk.
-        """
+        """Validate if the processed chunk maintains the same number of tags as the original chunk."""
         return original_chunk.count("<") == processed_chunk.count("<") and original_chunk.count(
             ">") == processed_chunk.count(">")
 
-    def _heuristic_remove_commas(self, text):
+    def _heuristic_remove_commas(self, text: str):
+        """Remove commas from the text."""
         return text.replace(",", "")
-
-    def apply_heuristics(self, prompt):
-        """Applies heuristics to the prompt based on the configuration."""
-
-
+    def apply_heuristics(self, prompt: str):
+        """Apply heuristics to the prompt based on the configuration."""
         for heuristic_name, enabled in config['heuristics'].items():
             if enabled:
                 method_name = f"_heuristic_{heuristic_name}"
@@ -102,12 +99,12 @@ class BookProcessor:
                 if heuristic_function and callable(heuristic_function):
                     prompt = heuristic_function(prompt)
                 else:
-                    print(f"Couldn't apply the {heuristic_name} heuristic")
+                    self.logger.warning(f"Couldn't apply the {heuristic_name} heuristic")
         return prompt
 
     def process_book(self, filepath: str):
-        """Processes book by modifying each chunk with LLM"""
-        print(f"Processing: {filepath}")
+        """Process book by modifying each chunk with LLM."""
+        self.logger.info(f"Processing: {filepath}")
         book_name = filepath[:filepath.rfind(".")]
         output_filepath = os.path.join(config["processing"]["output_dir"], f"{book_name}_rewritten.{self.book_extension}")
 
@@ -120,7 +117,7 @@ class BookProcessor:
         while i < len(chunks):
             chunk = chunks[i]
             start_time = time.time()
-            print(f"  Processing chunk {i + 1}/{len(chunks)}...")
+            self.logger.info(f"Processing chunk {i + 1}/{len(chunks)}...")
             processed_chunk_text = chunk
 
             try:
@@ -130,20 +127,20 @@ class BookProcessor:
                 processed_chunk_text = self.format_response(chunk, processed_chunk_text)
                 assert self.validate_response(chunk, processed_chunk_text)
             except Exception as e:
-                print(e)
+                self.logger.error(f"Error processing chunk: {e}")
                 if config["processing"]["retry_if_failed"]:
-                    print("Couldn't process the chunk, retrying")
+                    self.logger.warning("Couldn't process the chunk, retrying")
                     continue
                 else:
-                    print("Couldn't process the chunk, skipping")
+                    self.logger.warning("Couldn't process the chunk, skipping")
 
             processed_chunks.append(processed_chunk_text)
             self.file_handler.save_processed_chunks(processed_chunk_text)
             self.file_handler.save_processed_chunks_count(i)
-            print(f"Chunk processed in {time.time() - start_time} seconds")
+            self.logger.info(f"Chunk processed in {time.time() - start_time} seconds")
             self.file_handler.insert_text(filepath, ''.join(processed_chunks), output_filepath)
-            print(f"Saved current progress to {output_filepath}")
+            self.logger.info(f"Saved current progress to {output_filepath}")
             i += 1
         self.file_handler.clear_processed_chunks()
         self.file_handler.save_processed_chunks_count(-1)
-        print(f"Processed {filepath} in {len(chunks)} chunks")
+        self.logger.info(f"Processed {filepath} in {len(chunks)} chunks")

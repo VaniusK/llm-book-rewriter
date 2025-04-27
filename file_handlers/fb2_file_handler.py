@@ -5,7 +5,7 @@ from file_handlers.base_file_handler import BaseFileHandler
 
 class FB2FileHandler(BaseFileHandler):
     def insert_text(self, original_filepath: str, processed_chunks: List[str], output_filepath: str):
-        """Replaces fb2's <body> with given text"""
+        """Replace fb2's <body> with given text."""
         with open(original_filepath, 'r', encoding="utf-8") as input_file:
             with open(output_filepath, 'w', encoding="utf-8") as output_file:
                 input_file_text = input_file.read()
@@ -15,7 +15,7 @@ class FB2FileHandler(BaseFileHandler):
                 output_file.write(input_file_text)
 
     def extract_text(self, filepath: str):
-        """Extracts text and tags from fb2 file"""
+        """Extract text and tags from fb2 file."""
         tree = etree.parse(filepath)
         root = tree.getroot()
 

@@ -10,33 +10,40 @@ class BaseFileHandler(ABC):
 
     @abstractmethod
     def insert_text(self, original_filepath: str, processed_chunks: List[str], output_filepath: str):
+        """Insert processed text chunks into a file."""
         pass
 
     @abstractmethod
     def extract_text(self, filepath: str):
+        """Extract text from a file."""
         pass
 
     def save_processed_chunks(self, chunk: str):
+        """Save a processed chunk to the processed chunks file."""
         with open(self.processed_chunks_file, "a", encoding="utf-8") as file:
             file.write(chunk)
 
     def clear_processed_chunks(self):
+        """Clear the processed chunks file."""
         with open(self.processed_chunks_file, "w", encoding="utf-8") as file:
             file.write("")
 
     def load_processed_chunks(self):
+        """Load the processed chunks from the processed chunks file."""
         if not os.path.exists(self.processed_chunks_file):
             return ""
         with open(self.processed_chunks_file, "r", encoding="utf-8") as file:
             return file.read()
 
     def save_processed_chunks_count(self, chunk_count: int):
+        """Save the count of processed chunks to the processed chunks count file."""
         with open(self.processed_chunks_count_file, "w", encoding="utf-8") as file:
             file.write(str(chunk_count))
 
     def load_processed_chunks_count(self):
+        """Load the count of processed chunks from the processed chunks count file."""
         if not os.path.exists(self.processed_chunks_count_file):
             return 0
         with open(self.processed_chunks_count_file, "r", encoding="utf-8") as file:
-            f = file.read()
-            return int(f) if f else -1
+            content = file.read()
+            return int(content) if content else -1

@@ -1,5 +1,6 @@
 import docx
 import re
+import logging
 from typing import Dict, List
 from file_handlers.base_file_handler import BaseFileHandler
 from docx.text.run import Run
@@ -10,11 +11,11 @@ class DOCXFileHandler(BaseFileHandler):
     TAG_SUFFIX = "/>"
 
     def _generate_tag(self, index: int) -> str:
-        """Generates a unique tag for a text fragment."""
+        """Generate a unique tag for a text fragment."""
         return f"{self.TAG_PREFIX}{index}{self.TAG_SUFFIX}"
 
     def extract_text(self, filepath: str) -> str:
-        """Extracts text from DOCX, inserting tags before each text fragment, and returns a string for LLM and a map 'tag -> Run object'.
+        """Extract text from DOCX, inserting tags before each text fragment, and returns a string for LLM and a map 'tag -> Run object'.
         """
         try:
             document = docx.Document(filepath)
@@ -33,15 +34,14 @@ class DOCXFileHandler(BaseFileHandler):
             return full_text_for_llm
 
         except Exception as e:
-            print(f"Error extracting text/mapping from {filepath}: {e}")
+            logging.error(f"Error extracting text/mapping from {filepath}: {e}")
             return ""
 
     def insert_text(self,
                                 original_filepath: str,
                                 processed_chunks: List[str],
                                 output_filepath: str):
-        """Updates the text of fragments in the document based on the processed string with tags.
-        """
+        """Update the text of fragments in the document based on the processed string with tags."""
         # TODO: fix google docs view diffs(how?)
         try:
             processed_text_with_tags = "".join(processed_chunks)
@@ -71,13 +71,13 @@ class DOCXFileHandler(BaseFileHandler):
                     processed_runs_count += 1
                     missed_tags.discard(tag)
                 else:
-                    print(f"Warning: Tag '{tag}' found in LLM response but not in original document map. Skipping.")
+                    logging.warning(f"Tag '{tag}' found in LLM response but not in original document map. Skipping.")
 
             if missed_tags:
-                print(f"Warning: {len(missed_tags)} original tags were not found in the LLM response. Their corresponding run texts were not updated.")
-                print(f"Missing tags: {missed_tags}")
+                logging.warning(f"{len(missed_tags)} original tags were not found in the LLM response. Their corresponding run texts were not updated.")
+                logging.warning(f"Missing tags: {missed_tags}")
 
             document.save(output_filepath)
 
         except Exception as e:
-            print(f"Error inserting processed text into {output_filepath}: {e}")
+            logging.error(f"Error inserting processed text into {output_filepath}: {e}")

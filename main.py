@@ -1,8 +1,18 @@
+import logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logging.getLogger('google_genai').setLevel(logging.WARNING)
+logging.getLogger('httpx').setLevel(logging.WARNING)
 import os
 from book_processor import BookProcessor
 
 supported_extensions = ["fb2", "txt", "docx"]
 sys_files = ["processed_chunks.txt", "processed_chunks_count.txt"]
+
+logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
 

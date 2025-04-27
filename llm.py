@@ -12,6 +12,9 @@ class LLM:
         self.llm = self.get_llm()
 
     def get_llm(self):
+        """
+        Returns llm class based on provider name.
+        """
         module_name = "llm_providers." + self.provider
         class_name = self.provider.capitalize()
 
