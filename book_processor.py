@@ -20,7 +20,7 @@ class BookProcessor:
         self.file_handler = FileHandler(file_type).file_handler
         self.book_extension = file_type
 
-    def split_into_chunks(self, text, chunk_size: int) -> list[str]:
+    def split_into_chunks(self, text: str, chunk_size: int) -> list[str]:
         """Split text into chunks of(roughly) given size, considering tag/sentence endings."""
         ending_symbols = [".", "!", "?"]
         if ">" in text:
@@ -83,6 +83,7 @@ class BookProcessor:
 
     def validate_response(self, original_chunk: str, processed_chunk: str) -> bool:
         """Validate if the processed chunk maintains the same number of tags as the original chunk."""
+        # Todo: Check for tag structure(or go right away with placeholders instead of tags?)
         return original_chunk.count("<") == processed_chunk.count("<") and original_chunk.count(
             ">") == processed_chunk.count(">")
 
