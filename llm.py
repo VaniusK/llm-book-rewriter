@@ -1,4 +1,4 @@
-from imports import *
+import importlib
 from config import config
 
 class LLM:

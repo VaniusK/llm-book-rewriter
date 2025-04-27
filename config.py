@@ -1,4 +1,5 @@
-from imports import *
+import os
+import yaml
 
 def load_config(config_file="config.yaml"):
     if os.path.exists(config_file):

@@ -1,5 +1,4 @@
-from imports import *
-from config import config
+import importlib
 
 class FileHandler:
     """

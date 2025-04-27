@@ -1,4 +1,6 @@
-from imports import *
+import docx
+import re
+from typing import Dict, List
 from file_handlers.base_file_handler import BaseFileHandler
 from docx.text.run import Run
 
@@ -40,6 +42,7 @@ class DOCXFileHandler(BaseFileHandler):
                                 output_filepath: str):
         """Updates the text of fragments in the document based on the processed string with tags.
         """
+        # TODO: fix google docs view diffs(how?)
         try:
             processed_text_with_tags = "".join(processed_chunks)
             document = docx.Document(original_filepath)

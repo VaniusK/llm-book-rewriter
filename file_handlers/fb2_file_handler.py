@@ -1,4 +1,6 @@
-from imports import *
+from typing import List
+import re
+from lxml import etree
 from file_handlers.base_file_handler import BaseFileHandler
 
 class FB2FileHandler(BaseFileHandler):

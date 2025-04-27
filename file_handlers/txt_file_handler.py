@@ -1,4 +1,4 @@
-from imports import *
+from typing import List
 from file_handlers.base_file_handler import BaseFileHandler
 
 class TXTFileHandler(BaseFileHandler):

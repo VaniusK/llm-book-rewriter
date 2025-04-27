@@ -1,4 +1,6 @@
-from imports import *
+from abc import ABC, abstractmethod
+from typing import List
+import os
 
 class BaseFileHandler(ABC):
     def __init__(self, processed_chunks_file="processed_chunks.txt",
