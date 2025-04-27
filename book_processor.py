@@ -44,23 +44,24 @@ class BookProcessor:
 
     def format_response(self, original_chunk: str, processed_chunk: str) -> str:
         """
-        Ensures correct special symbol (\n, \t, whitespace, etc.) usage on chunk edges and between <RUN{X}/> tags
+        Ensures correct special symbol (\n, \t, whitespace, etc.) usage on chunk edges and between xml tags
         by copying them from the original chunk to the processed one.
         """
-        # TODO: for every tag
-        run_tag_pattern = r'(<RUN\d+/>)'
-
-        original_parts = re.split(run_tag_pattern, original_chunk)
-        processed_parts = re.split(run_tag_pattern, processed_chunk)
+        tag_pattern = r"(<[^>]+>)"
+        original_parts = re.split(tag_pattern, original_chunk)
+        processed_parts = re.split(tag_pattern, processed_chunk)
 
         if len(original_parts) != len(processed_parts):
             return processed_chunk
 
         result_parts = []
         for i, original_part in enumerate(original_parts):
+            if i >= len(processed_parts):
+                 continue
+
             processed_part = processed_parts[i]
 
-            if re.match(run_tag_pattern, original_part) or not original_part:
+            if (re.fullmatch(tag_pattern, original_part)) or not original_part:
                 result_parts.append(processed_part)
             else:
                 leading_whitespace_match = re.match(r'^(\s*)', original_part)
@@ -71,8 +72,11 @@ class BookProcessor:
 
                 core_content = processed_part.strip()
 
-                formatted_part = leading_whitespace + core_content + trailing_whitespace
-                result_parts.append(formatted_part)
+                if core_content:
+                    formatted_part = leading_whitespace + core_content + trailing_whitespace
+                    result_parts.append(formatted_part)
+                else:
+                    result_parts.append(original_part)
 
         return "".join(result_parts)
 
