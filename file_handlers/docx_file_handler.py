@@ -40,9 +40,9 @@ class DOCXFileHandler(BaseFileHandler):
                                 processed_chunks: List[str],
                                 output_filepath: str):
         """Update the text of fragments in the document based on the processed string with tags."""
-        # TODO: fix google docs view diffs(how?)
         try:
             processed_text_with_tags = "".join(processed_chunks)
+            logging.info(processed_text_with_tags)
             document = docx.Document(original_filepath)
             new_run_map: Dict[str, Run] = {}
             run_index = 1

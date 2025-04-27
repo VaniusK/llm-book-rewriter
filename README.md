@@ -97,3 +97,10 @@ To run the program, you need a Google AI Studio API key. Here's how to get it:
 *   Put the books (currently only supports fb2 format) in the same directory as the code, then run it.
 *   The output will be in the "output_books" folder. Processing one average book (400k characters) takes about ten minutes.
 *   If you want to start processing from scratch, clear the processed_chunks.txt and processed_chunks_count.txt files.
+
+# Todo: Устарело, полностью переписать,
+не забыть упомянуть, что для корректной работы
+просмотра изменений в гугл документах
+нужно оригинальный файл скачать, а потом
+загрузить снова. И сравнивать уже с этим
+файлом.
