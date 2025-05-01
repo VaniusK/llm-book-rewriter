@@ -91,6 +91,7 @@ class BookProcessor:
 
     def process_book(self, filepath: str):
         """Process book by modifying each chunk with LLM."""
+        # TODO: Async processing? Would require changing some of heuristic_applier.py
         self.logger.info(f"Processing: {filepath}")
         book_name = filepath[:filepath.rfind(".")]
         output_filepath = os.path.join(config["processing"]["output_dir"], f"{book_name}_rewritten.{self.book_extension}")
@@ -108,6 +109,7 @@ class BookProcessor:
 
             i2 = 0
             while i2 < config["processing"]["number_of_passes"]:
+                previous_processed_chunk = processed_chunk_text
                 error_occurred = False
                 self.logger.info(f"Processing chunk {i + 1}/{len(chunks)}, pass {i2 + 1}/{config['processing']['number_of_passes']}")
                 try:
@@ -121,6 +123,8 @@ class BookProcessor:
                     processed_chunk_text = self.format_response(chunk, processed_chunk_text)
                 except ValidationFailedError as ve:
                     self.logger.error(str(ve))
+                    print(full_prompt)
+                    print(processed_chunk_text)
                     error_occurred = True
                 except Exception as e:
                     # TODO: Change to specific exceptions: filter, api limit, etc
@@ -128,6 +132,7 @@ class BookProcessor:
                     error_occurred = True
 
                 if error_occurred:
+                    processed_chunk_text = previous_processed_chunk
                     if config["processing"]["retry_if_failed"]:
                         self.logger.warning("Couldn't process the chunk, retrying")
                         time.sleep(1)
