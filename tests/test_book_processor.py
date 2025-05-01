@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import patch
 from book_processor import BookProcessor
 from config import config
+from heuristic_applier import HeuristicApplier
 
 @patch.dict(config, {'processing': {'output_dir': 'test_output'}}, clear=True)
 @patch('book_processor.FileHandler')
@@ -27,8 +28,12 @@ class TestBookProcessor(unittest.TestCase):
         self.assertEqual(processor.format_response("\n\nSome text\n\n", "\t New text \t"),"\n\nNew text\n\n")
 
     def test_heuristics(self, MockLLM, MockFileHandler):
-        processor = BookProcessor("google", "fb2")
-        self.assertEqual(processor._heuristic_remove_commas("Apples, bananas, oranges"), "Apples bananas oranges")
+        heuristic_applier = HeuristicApplier()
+        self.assertEqual(heuristic_applier.preprocessing_remove_commas("Apples, bananas, oranges"), "Apples bananas oranges")
+        self.assertEqual(heuristic_applier.preprocessing_replace_tags_with_placeholder("<br> text <br>"), "@ text @")
+        self.assertEqual(heuristic_applier.postprocessing_replace_tags_with_placeholder("@ text @"), "<br> text <br>")
+        self.assertEqual(heuristic_applier.preprocessing_replace_tags_with_placeholder("<br> text@ <br>"), "# text@ #")
+        self.assertEqual(heuristic_applier.postprocessing_replace_tags_with_placeholder("# text@ #"), "<br> text@ <br>")
 
 
 if __name__ == '__main__':

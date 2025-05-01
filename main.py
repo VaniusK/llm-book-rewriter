@@ -22,8 +22,6 @@ if __name__ == "__main__":
         if filename in sys_files:
             continue
         extension = filename[filename.rfind(".") + 1:]
-        if extension != "fb2":
-            continue
         if extension in supported_extensions:
             book_processor = BookProcessor(config["processing"]["provider"], extension)
             book_processor.process_book(filename)

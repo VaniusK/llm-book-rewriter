@@ -7,7 +7,7 @@ class HeuristicApplier:
         self.logger = logging.getLogger(__name__)
         self.preprocessing_heuristics = [self.preprocessing_remove_commas, self.preprocessing_replace_tags_with_placeholder]
         self.postprocessing_heuristics = [self.postprocessing_replace_tags_with_placeholder]
-        self.possible_placeholders = ["@", "#", "$", "%", "^", "&", "*", "~", "`", "~$"]
+        self.possible_placeholders = ["@", "#", "$", "%", "^", "&", "*", "~", "`", "@@", "@#", "@$", "@%"]
         self.replaced_tags = []
         self.chosen_placeholder = ""
 
