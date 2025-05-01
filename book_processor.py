@@ -4,7 +4,11 @@ import time
 import logging
 from config import config
 from file_handler import FileHandler
+from heuristic_applier import HeuristicApplier
 from llm import LLM
+
+class ValidationFailedError(Exception):
+    pass
 
 class BookProcessor:
     """
@@ -15,9 +19,8 @@ class BookProcessor:
         self.llm = LLM(llm_provider).llm
         os.makedirs(config["processing"]["output_dir"], exist_ok=True)
         self.logger = logging.getLogger(__name__)
-
-
         self.file_handler = FileHandler(file_type).file_handler
+        self.heuristic_applier = HeuristicApplier()
         self.book_extension = file_type
 
     def split_into_chunks(self, text: str, chunk_size: int) -> list[str]:
@@ -83,25 +86,8 @@ class BookProcessor:
 
     def validate_response(self, original_chunk: str, processed_chunk: str) -> bool:
         """Validate if the processed chunk maintains the same number of tags as the original chunk."""
-        # Todo: Check for tag structure(or go right away with placeholders instead of tags?)
         return original_chunk.count("<") == processed_chunk.count("<") and original_chunk.count(
             ">") == processed_chunk.count(">")
-
-    def _heuristic_remove_commas(self, text: str):
-        """Remove commas from the text."""
-        return text.replace(",", "")
-    def apply_heuristics(self, prompt: str):
-        """Apply heuristics to the prompt based on the configuration."""
-        for heuristic_name, enabled in config['heuristics'].items():
-            if enabled:
-                method_name = f"_heuristic_{heuristic_name}"
-                heuristic_function = getattr(self, method_name, None)
-
-                if heuristic_function and callable(heuristic_function):
-                    prompt = heuristic_function(prompt)
-                else:
-                    self.logger.warning(f"Couldn't apply the {heuristic_name} heuristic")
-        return prompt
 
     def process_book(self, filepath: str):
         """Process book by modifying each chunk with LLM."""
@@ -121,19 +107,32 @@ class BookProcessor:
             self.logger.info(f"Processing chunk {i + 1}/{len(chunks)}...")
             processed_chunk_text = chunk
 
+            error_occurred = False
+
             try:
                 full_prompt = config['prompt']
-                full_prompt = full_prompt.format(text_chunk=self.apply_heuristics(chunk))
+                full_prompt = full_prompt.format(text_chunk=self.heuristic_applier.apply_preprocessing(chunk))
                 processed_chunk_text = self.llm.generate(full_prompt)
+                processed_chunk_text = self.heuristic_applier.apply_postprocessing(processed_chunk_text)
+                if not self.validate_response(chunk, processed_chunk_text):
+                    raise ValidationFailedError(f"Validation failed while processing chunk {i + 1}/{len(chunks)}")
                 processed_chunk_text = self.format_response(chunk, processed_chunk_text)
-                assert self.validate_response(chunk, processed_chunk_text)
+            except ValidationFailedError as ve:
+                self.logger.error(str(ve))
+                error_occurred = True
             except Exception as e:
-                self.logger.error(f"Error processing chunk: {e}")
+                # TODO: Change to specific exceptions: filter, api limit, etc
+                self.logger.error(f"Exception happened while processing chunk {i + 1}/{len(chunks)}: {e}")
+                error_occurred = True
+
+            if error_occurred:
                 if config["processing"]["retry_if_failed"]:
                     self.logger.warning("Couldn't process the chunk, retrying")
+                    time.sleep(1)
                     continue
                 else:
                     self.logger.warning("Couldn't process the chunk, skipping")
+
 
             processed_chunks.append(processed_chunk_text)
             self.file_handler.save_processed_chunks(processed_chunk_text)

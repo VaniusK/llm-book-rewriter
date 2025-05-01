@@ -11,9 +11,7 @@ def load_config(config_file: str):
     return {}
 
 def deep_merge_dicts(base_dict: Dict[Any, Any], override_dict: Dict[Any, Any]):
-    """
-    Merging two dictionaries with second one getting the priority
-    """
+    """Merge two dictionaries with second one getting the priority"""
     for key, value in override_dict.items():
         if (key in base_dict and
                 isinstance(base_dict[key], collections.abc.Mapping) and

@@ -1,6 +1,7 @@
 from google import genai
 from google.genai import types as genai_types
 from llm_providers.base_llm import BaseLLM
+from config import config
 
 class Google(BaseLLM):
     def __init__(self, model_name: str, api_key: str):
@@ -29,8 +30,10 @@ class Google(BaseLLM):
             temperature=1,
             max_output_tokens=8192,
             top_p=0.95,
-            top_k=64
+            top_k=64,
         )
+        if "2.5-flash" in model_name:
+            self.model_config.thinking_config=genai_types.ThinkingConfig(thinking_budget=config["google"]["thinking_budget"])
 
     def generate(self, prompt: str) -> str:
         response = self.client.models.generate_content(
