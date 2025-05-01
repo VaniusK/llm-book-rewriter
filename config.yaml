@@ -14,6 +14,7 @@ processing:
   provider: "google"
   number_of_passes: 1
   retry_if_failed: True
+  temporary_file_saves: True
 
 prompt: |
   **Инструкции**

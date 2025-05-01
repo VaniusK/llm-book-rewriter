@@ -142,8 +142,9 @@ class BookProcessor:
             self.file_handler.save_processed_chunks(processed_chunk_text)
             self.file_handler.save_processed_chunks_count(i)
             self.logger.info(f"Chunk processed in {time.time() - start_time} seconds")
-            self.file_handler.insert_text(filepath, ''.join(processed_chunks), output_filepath)
-            self.logger.info(f"Saved current progress to {output_filepath}")
+            if config["processing"]["temporary_file_saves"]:
+                self.file_handler.insert_text(filepath, ''.join(processed_chunks), output_filepath)
+                self.logger.info(f"Saved current progress to {output_filepath}")
             i += 1
         self.file_handler.clear_processed_chunks()
         self.file_handler.save_processed_chunks_count(-1)
