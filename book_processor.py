@@ -2,6 +2,7 @@ import os
 import re
 import time
 import logging
+from typing import List
 from config import config
 from file_handler import FileHandler
 from heuristic_applier import HeuristicApplier
@@ -89,15 +90,56 @@ class BookProcessor:
         return original_chunk.count("<") == processed_chunk.count("<") and original_chunk.count(
             ">") == processed_chunk.count(">")
 
+    def process_chunk(self, chunk: str, i: int, chunks: List[str]) -> str:
+        processed_chunk_text = chunk
+
+        i2 = 0
+        while i2 < config["processing"]["number_of_passes"]:
+            previous_processed_chunk = processed_chunk_text
+            error_occurred = False
+            self.logger.info(
+                f"Processing chunk {i + 1}/{len(chunks)}, pass {i2 + 1}/{config['processing']['number_of_passes']}")
+            try:
+                # TODO: Maybe include original text in the prompt? Requires testing
+                full_prompt = config['prompt']
+                preprocessed_chunk, heuristic_state = self.heuristic_applier.apply_preprocessing(processed_chunk_text, i2 == 0)
+                full_prompt = full_prompt.format(text_chunk=preprocessed_chunk)
+                processed_chunk_text = self.llm.generate(full_prompt)
+                processed_chunk_text = self.heuristic_applier.apply_postprocessing(processed_chunk_text, heuristic_state)
+                if not self.validate_response(chunk, processed_chunk_text):
+                    raise ValidationFailedError(f"Validation failed while processing chunk {i + 1}/{len(chunks)}")
+                processed_chunk_text = self.format_response(chunk, processed_chunk_text)
+            except ValidationFailedError as ve:
+                self.logger.error(str(ve))
+                self.logger.debug(full_prompt)
+                self.logger.debug(processed_chunk_text)
+                error_occurred = True
+            except Exception as e:
+                # TODO: Change to specific exceptions: filter, api limit, etc
+                self.logger.error(f"Exception happened while processing chunk {i + 1}/{len(chunks)}: {e}")
+                error_occurred = True
+
+            if error_occurred:
+                processed_chunk_text = previous_processed_chunk
+                if config["processing"]["retry_if_failed"]:
+                    self.logger.warning("Couldn't process the chunk, retrying")
+                    time.sleep(1)
+                    continue
+                else:
+                    self.logger.warning("Couldn't process the chunk, skipping")
+            i2 += 1
+            chunk = processed_chunk_text
+        return processed_chunk_text
+
     def process_book(self, filepath: str):
         """Process book by modifying each chunk with LLM."""
-        # TODO: Async processing? Would require changing some of heuristic_applier.py
+        # TODO: Async processing?
         self.logger.info(f"Processing: {filepath}")
         book_name = filepath[:filepath.rfind(".")]
         output_filepath = os.path.join(config["processing"]["output_dir"], f"{book_name}_rewritten.{self.book_extension}")
 
-        segments = self.file_handler.extract_text(filepath)
-        chunks = self.split_into_chunks(segments, config["processing"]["chunk_size"])
+        text = self.file_handler.extract_text(filepath)
+        chunks = self.split_into_chunks(text, config["processing"]["chunk_size"])
 
         processed_chunks = [self.file_handler.load_processed_chunks()]
         chunks_processed = self.file_handler.load_processed_chunks_count()
@@ -105,43 +147,8 @@ class BookProcessor:
         while i < len(chunks):
             chunk = chunks[i]
             start_time = time.time()
-            processed_chunk_text = chunk
 
-            i2 = 0
-            while i2 < config["processing"]["number_of_passes"]:
-                previous_processed_chunk = processed_chunk_text
-                error_occurred = False
-                self.logger.info(f"Processing chunk {i + 1}/{len(chunks)}, pass {i2 + 1}/{config['processing']['number_of_passes']}")
-                try:
-                    # TODO: Maybe include original text in the prompt? Requires testing
-                    full_prompt = config['prompt']
-                    full_prompt = full_prompt.format(text_chunk=self.heuristic_applier.apply_preprocessing(processed_chunk_text))
-                    processed_chunk_text = self.llm.generate(full_prompt)
-                    processed_chunk_text = self.heuristic_applier.apply_postprocessing(processed_chunk_text)
-                    if not self.validate_response(chunk, processed_chunk_text):
-                        raise ValidationFailedError(f"Validation failed while processing chunk {i + 1}/{len(chunks)}")
-                    processed_chunk_text = self.format_response(chunk, processed_chunk_text)
-                except ValidationFailedError as ve:
-                    self.logger.error(str(ve))
-                    print(full_prompt)
-                    print(processed_chunk_text)
-                    error_occurred = True
-                except Exception as e:
-                    # TODO: Change to specific exceptions: filter, api limit, etc
-                    self.logger.error(f"Exception happened while processing chunk {i + 1}/{len(chunks)}: {e}")
-                    error_occurred = True
-
-                if error_occurred:
-                    processed_chunk_text = previous_processed_chunk
-                    if config["processing"]["retry_if_failed"]:
-                        self.logger.warning("Couldn't process the chunk, retrying")
-                        time.sleep(1)
-                        continue
-                    else:
-                        self.logger.warning("Couldn't process the chunk, skipping")
-                i2 += 1
-                chunk = processed_chunk_text
-
+            processed_chunk_text = self.process_chunk(chunk, i, chunks)
 
             processed_chunks.append(processed_chunk_text)
             self.file_handler.save_processed_chunks(processed_chunk_text)

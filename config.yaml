@@ -38,4 +38,4 @@ prompt: |
   6. НИКОГДА не добавляйте/не удаляйте/не изменяйте системные символы: @, #, $, % и другие
 heuristics:
   remove_commas: True
-  replace_tags_with_placeholder: True
+  replace_tags_with_placeholder: False
