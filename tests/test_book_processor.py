@@ -29,11 +29,11 @@ class TestBookProcessor(unittest.TestCase):
 
     def test_heuristics(self, MockLLM, MockFileHandler):
         heuristic_applier = HeuristicApplier()
-        self.assertEqual(heuristic_applier.preprocessing_remove_commas("Apples, bananas, oranges"), "Apples bananas oranges")
-        self.assertEqual(heuristic_applier.preprocessing_replace_tags_with_placeholder("<br> text <br>"), "@ text @")
-        self.assertEqual(heuristic_applier.postprocessing_replace_tags_with_placeholder("@ text @"), "<br> text <br>")
-        self.assertEqual(heuristic_applier.preprocessing_replace_tags_with_placeholder("<br> text@ <br>"), "# text@ #")
-        self.assertEqual(heuristic_applier.postprocessing_replace_tags_with_placeholder("# text@ #"), "<br> text@ <br>")
+        self.assertEqual(heuristic_applier.preprocessing_remove_commas("Apples, bananas, oranges"), ["Apples bananas oranges", {}])
+        self.assertEqual(heuristic_applier.preprocessing_replace_tags_with_placeholder("<br> text <br>"), ["@ text @", {"replaced_tags": ["br", "br"], "placeholder": "@"}])
+        self.assertEqual(heuristic_applier.postprocessing_replace_tags_with_placeholder("@ text @", {"replaced_tags": ["br", "br"], "placeholder": "@"}), "<br> text <br>")
+        self.assertEqual(heuristic_applier.preprocessing_replace_tags_with_placeholder("<br> text@ <br>"), ["# text@ #", {"replaced_tags": ["br", "br"], "placeholder": "#"}])
+        self.assertEqual(heuristic_applier.postprocessing_replace_tags_with_placeholder("# text@ #", {"replaced_tags": ["br", "br"], "placeholder": "#"}), "<br> text@ <br>")
 
 
 if __name__ == '__main__':

@@ -38,7 +38,7 @@ class HeuristicApplier:
 
     def preprocessing_remove_commas(self, prompt: str):
         """Remove commas from the text."""
-        return (prompt.replace(",", ""), {})
+        return [prompt.replace(",", ""), {}]
 
     def preprocessing_replace_tags_with_placeholder(self, prompt: str):
         """Replace XML tags with a placeholder."""
