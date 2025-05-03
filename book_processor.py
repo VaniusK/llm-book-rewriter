@@ -2,10 +2,12 @@ import os
 import re
 import time
 import logging
+import asyncio
 from typing import List
 from config import config
 from file_handler import FileHandler
 from heuristic_applier import HeuristicApplier
+from google import genai
 from llm import LLM
 
 class ValidationFailedError(Exception):
@@ -23,6 +25,7 @@ class BookProcessor:
         self.file_handler = FileHandler(file_type).file_handler
         self.heuristic_applier = HeuristicApplier()
         self.book_extension = file_type
+        self.semaphore = asyncio.Semaphore(config["processing"]["workers_amount"])
 
     def split_into_chunks(self, text: str, chunk_size: int) -> list[str]:
         """Split text into chunks of(roughly) given size, considering tag/sentence endings."""
@@ -90,50 +93,59 @@ class BookProcessor:
         return original_chunk.count("<") == processed_chunk.count("<") and original_chunk.count(
             ">") == processed_chunk.count(">")
 
-    def process_chunk(self, chunk: str, i: int, chunks: List[str]) -> str:
+    async def process_chunk(self, chunk: str, i: int, chunks: List[str], book_name: str) -> str:
         processed_chunk_text = chunk
 
         i2 = 0
-        while i2 < config["processing"]["number_of_passes"]:
-            previous_processed_chunk = processed_chunk_text
-            error_occurred = False
-            self.logger.info(
-                f"Processing chunk {i + 1}/{len(chunks)}, pass {i2 + 1}/{config['processing']['number_of_passes']}")
-            try:
-                # TODO: Maybe include original text in the prompt? Requires testing
-                full_prompt = config['prompt']
-                preprocessed_chunk, heuristic_state = self.heuristic_applier.apply_preprocessing(processed_chunk_text, i2 == 0)
-                full_prompt = full_prompt.format(text_chunk=preprocessed_chunk)
-                processed_chunk_text = self.llm.generate(full_prompt)
-                processed_chunk_text = self.heuristic_applier.apply_postprocessing(processed_chunk_text, heuristic_state)
-                if not self.validate_response(chunk, processed_chunk_text):
-                    raise ValidationFailedError(f"Validation failed while processing chunk {i + 1}/{len(chunks)}")
-                processed_chunk_text = self.format_response(chunk, processed_chunk_text)
-            except ValidationFailedError as ve:
-                self.logger.error(str(ve))
-                self.logger.debug(full_prompt)
-                self.logger.debug(processed_chunk_text)
-                error_occurred = True
-            except Exception as e:
-                # TODO: Change to specific exceptions: filter, api limit, etc
-                self.logger.error(f"Exception happened while processing chunk {i + 1}/{len(chunks)}: {e}")
-                error_occurred = True
+        async with self.semaphore:
+            while i2 < config["processing"]["number_of_passes"]:
+                previous_processed_chunk = processed_chunk_text
+                error_occurred = False
+                self.logger.info(
+                    f"Processing chunk {i + 1}/{len(chunks)}, pass {i2 + 1}/{config['processing']['number_of_passes']}")
+                try:
+                    # TODO: Maybe include original text in the prompt? Requires testing
+                    full_prompt = config['prompt']
+                    preprocessed_chunk, heuristic_state = self.heuristic_applier.apply_preprocessing(processed_chunk_text, i2 == 0)
+                    full_prompt = full_prompt.format(text_chunk=preprocessed_chunk)
+                    processed_chunk_text = await self.llm.generate(full_prompt)
+                    processed_chunk_text = self.heuristic_applier.apply_postprocessing(processed_chunk_text, heuristic_state)
+                    if not self.validate_response(chunk, processed_chunk_text):
+                        raise ValidationFailedError(f"Validation failed while processing chunk {i + 1}/{len(chunks)}")
+                    processed_chunk_text = self.format_response(chunk, processed_chunk_text)
+                except ValidationFailedError as e:
+                    self.logger.error(str(e))
+                    self.logger.debug(full_prompt)
+                    self.logger.debug(processed_chunk_text)
+                    error_occurred = True
+                except genai.errors.APIError as e:
+                    if e.status == "RESOURCE_EXHAUSTED":
+                        self.logger.error(f"API limit exhausted while processing chunk {i + 1}/{len(chunks)}")
+                        await asyncio.sleep(5)
+                    else:
+                        self.logger.error(f"API error happened while processing chunk {i + 1}/{len(chunks)}: {e}")
+                    error_occurred = True
+                except Exception as e:
+                    # TODO: Change to specific exceptions: filter, api limit, etc
+                    self.logger.error(f"Exception happened while processing chunk {i + 1}/{len(chunks)}: {e}")
+                    error_occurred = True
 
-            if error_occurred:
-                processed_chunk_text = previous_processed_chunk
-                if config["processing"]["retry_if_failed"]:
-                    self.logger.warning("Couldn't process the chunk, retrying")
-                    time.sleep(1)
-                    continue
-                else:
-                    self.logger.warning("Couldn't process the chunk, skipping")
-            i2 += 1
-            chunk = processed_chunk_text
-        return processed_chunk_text
+                if error_occurred:
+                    processed_chunk_text = previous_processed_chunk
+                    if config["processing"]["retry_if_failed"]:
+                        self.logger.warning("Couldn't process the chunk, retrying")
+                        await asyncio.sleep(1)
+                        continue
+                    else:
+                        self.logger.warning("Couldn't process the chunk, skipping")
+                i2 += 1
+                chunk = processed_chunk_text
+            await self.file_handler.save_processed_chunk_to_file(book_name, i, processed_chunk_text)
+            self.logger.info(f"Successfully processed and saved chunk {i + 1}/{len(chunks)}")
+            return processed_chunk_text
 
-    def process_book(self, filepath: str):
+    async def process_book(self, filepath: str):
         """Process book by modifying each chunk with LLM."""
-        # TODO: Async processing?
         self.logger.info(f"Processing: {filepath}")
         book_name = filepath[:filepath.rfind(".")]
         output_filepath = os.path.join(config["processing"]["output_dir"], f"{book_name}_rewritten.{self.book_extension}")
@@ -141,23 +153,51 @@ class BookProcessor:
         text = self.file_handler.extract_text(filepath)
         chunks = self.split_into_chunks(text, config["processing"]["chunk_size"])
 
-        processed_chunks = [self.file_handler.load_processed_chunks()]
-        chunks_processed = self.file_handler.load_processed_chunks_count()
-        i = chunks_processed + 1
-        while i < len(chunks):
-            chunk = chunks[i]
-            start_time = time.time()
+        tasks = []
+        chunks_to_process = []
+        indices_to_process = []
+        processed_chunks_results = [""] * len(chunks)
+        for i in range(len(chunks)):
+            chunk = await self.file_handler.load_processed_chunk_from_file(book_name, i)
+            if chunk is None:
+                chunks_to_process.append(chunks[i])
+                indices_to_process.append(i)
+            else:
+                processed_chunks_results[i] = chunk
 
-            processed_chunk_text = self.process_chunk(chunk, i, chunks)
+        for i, chunk_index in enumerate(indices_to_process):
+            chunk = chunks_to_process[i]
+            task = asyncio.create_task(self.process_chunk(chunk, chunk_index, chunks, book_name), name=f"Chunk-{chunk_index + 1}")
+            tasks.append(task)
 
-            processed_chunks.append(processed_chunk_text)
-            self.file_handler.save_processed_chunks(processed_chunk_text)
-            self.file_handler.save_processed_chunks_count(i)
-            self.logger.info(f"Chunk processed in {time.time() - start_time} seconds")
-            if config["processing"]["temporary_file_saves"]:
-                self.file_handler.insert_text(filepath, ''.join(processed_chunks), output_filepath)
-                self.logger.info(f"Saved current progress to {output_filepath}")
-            i += 1
-        self.file_handler.clear_processed_chunks()
-        self.file_handler.save_processed_chunks_count(-1)
-        self.logger.info(f"Processed {filepath} in {len(chunks)} chunks")
+        self.logger.info(f"Starting processing for {len(tasks)} chunks using up to {self.semaphore._value} concurrent workers.")
+
+        start_time_processing = time.time()
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        end_time_processing = time.time()
+        self.logger.info(f"Finished processing {len(tasks)} chunks in {end_time_processing - start_time_processing:.2f} seconds.")
+
+        successful_chunks = 0
+        failed_chunks_indices = []
+        for i, result in enumerate(results):
+            original_index = indices_to_process[i]
+            if isinstance(result, Exception):
+                self.logger.error(f"Task for chunk {original_index + 1} failed: {result}")
+                failed_chunks_indices.append(original_index + 1)
+                processed_chunks_results[original_index] = chunks[original_index]
+            else:
+                processed_chunks_results[original_index] = result
+                successful_chunks += 1
+
+        if failed_chunks_indices:
+            self.logger.warning(f"Failed to process chunks (original content used): {failed_chunks_indices}")
+
+        final_text = "".join(processed_chunks_results)
+
+        try:
+            await asyncio.to_thread(self.file_handler.insert_text, filepath, final_text, output_filepath)
+            self.logger.info(f"Successfully assembled and saved final result to {output_filepath}")
+
+        except Exception as e:
+            self.logger.error(f"Failed to save final file {output_filepath}: {e}", exc_info=True)
+        await self.file_handler.clear_chunk_cache(book_name)
