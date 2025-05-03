@@ -15,8 +15,7 @@ class DOCXFileHandler(BaseFileHandler):
         return f"{self.TAG_PREFIX}{index}{self.TAG_SUFFIX}"
 
     def extract_text(self, filepath: str) -> str:
-        """Extract text from DOCX, inserting tags before each text fragment, and returns a string for LLM and a map 'tag -> Run object'.
-        """
+        """Extract text from DOCX, inserting tags before each text fragment, and returns a string for LLM"""
         try:
             document = docx.Document(filepath)
             text_for_llm_parts = []

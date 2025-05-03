@@ -7,6 +7,6 @@ class BaseLLM(ABC):
         pass
 
     @abstractmethod
-    def generate(self, prompt: str) -> str:
+    async def generate(self, prompt: str) -> str:
         """Generate text based on the given prompt."""
         pass

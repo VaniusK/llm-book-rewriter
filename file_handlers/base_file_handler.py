@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
-from typing import List
-import os
+from typing import List, Optional
+import os, shutil
+from pathlib import Path
+import asyncio
 
 class BaseFileHandler(ABC):
-    def __init__(self, processed_chunks_file="processed_chunks.txt",
-                 processed_chunks_count_file="processed_chunks_count.txt"):
-        self.processed_chunks_file: str = processed_chunks_file
-        self.processed_chunks_count_file: str = processed_chunks_count_file
+    def __init__(self):
+        pass
 
     @abstractmethod
     def insert_text(self, original_filepath: str, processed_chunks: List[str], output_filepath: str):
@@ -18,32 +18,27 @@ class BaseFileHandler(ABC):
         """Extract text from a file."""
         pass
 
-    def save_processed_chunks(self, chunk: str):
-        """Save a processed chunk to the processed chunks file."""
-        with open(self.processed_chunks_file, "a", encoding="utf-8") as file:
-            file.write(chunk)
+    async def _get_cache_dir(self, book_name: str) -> Path:
+        cache_dir = Path(os.path.join("book_temp", book_name))
+        await asyncio.to_thread(os.makedirs, cache_dir, exist_ok=True)
+        return cache_dir
 
-    def clear_processed_chunks(self):
-        """Clear the processed chunks file."""
-        with open(self.processed_chunks_file, "w", encoding="utf-8") as file:
-            file.write("")
+    async def _get_chunk_filepath(self, book_name: str, chunk_index: int) -> Path:
+        book_dir = await self._get_cache_dir(book_name)
+        return Path(os.path.join(book_dir, f"chunk{chunk_index:05d}.txt"))
 
-    def load_processed_chunks(self):
-        """Load the processed chunks from the processed chunks file."""
-        if not os.path.exists(self.processed_chunks_file):
-            return ""
-        with open(self.processed_chunks_file, "r", encoding="utf-8") as file:
-            return file.read()
+    async def save_processed_chunk_to_file(self, book_name: str, chunk_index: int, chunk_text: str):
+        chunk_filepath = await self._get_chunk_filepath(book_name, chunk_index)
+        await asyncio.to_thread(chunk_filepath.write_text, chunk_text, encoding="utf-8")
 
-    def save_processed_chunks_count(self, chunk_count: int):
-        """Save the count of processed chunks to the processed chunks count file."""
-        with open(self.processed_chunks_count_file, "w", encoding="utf-8") as file:
-            file.write(str(chunk_count))
+    async def load_processed_chunk_from_file(self, book_name: str, chunk_index: int) -> Optional[str]:
+        chunk_filepath = await self._get_chunk_filepath(book_name, chunk_index)
+        if await asyncio.to_thread(chunk_filepath.exists):
+            return await asyncio.to_thread(chunk_filepath.read_text, encoding="utf-8")
+        return None
 
-    def load_processed_chunks_count(self):
-        """Load the count of processed chunks from the processed chunks count file."""
-        if not os.path.exists(self.processed_chunks_count_file):
-            return 0
-        with open(self.processed_chunks_count_file, "r", encoding="utf-8") as file:
-            content = file.read()
-            return int(content) if content else -1
+    async def clear_chunk_cache(self, book_name: str):
+        book_dir = await self._get_cache_dir(book_name)
+        return await asyncio.to_thread(
+            lambda: shutil.rmtree(book_dir)
+        )
