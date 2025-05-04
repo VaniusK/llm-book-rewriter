@@ -58,7 +58,7 @@ class HeuristicApplier:
         for tag in postprocessing_info["replaced_tags"]:
             prompt = prompt.replace(placeholder, f"<{tag}>", 1)
         # So if there are any excess placeholders, validate_response would catch tag count mismatch
-        prompt.replace(placeholder, "<>")
+        prompt = prompt.replace(placeholder, "<>")
         return prompt
 
 

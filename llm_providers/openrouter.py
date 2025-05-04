@@ -25,6 +25,8 @@ class Openrouter(BaseLLM):
                 }
             ]
         )
-        if completion.error:
-            raise OpenaiError(completion.error["message"])
-        return completion.choices[0].message.content
+        if hasattr(completion, 'error'):
+            if completion.error:
+                raise OpenaiError(completion.error["message"])
+        else:
+            return completion.choices[0].message.content
