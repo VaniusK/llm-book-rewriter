@@ -28,15 +28,19 @@ class FB2FileHandler(BaseFileHandler):
             tag_name = etree.QName(element).localname
             if tag_name == "binary":
                 return text_with_tags
-            text_with_tags += f"<{tag_name}>"
+            tag_text = ""
+            tag_text += f"<{tag_name}>"
             if element.text:
-                text_with_tags += f"{element.text}"
+                tag_text += f"{element.text}"
             child_count = 0
             for child in element:
                 child_count += 1
-                text_with_tags += process_element(child, depth + 1)
+                tag_text += process_element(child, depth + 1)
             if child_count or element.text:
-                text_with_tags += f"</{tag_name}>"
+                tag_text += f"</{tag_name}>"
+            else:
+                tag_text = f"<{tag_name}/>"
+            text_with_tags += tag_text
             if element.tail:
                 text_with_tags += f"{element.tail}"
 
