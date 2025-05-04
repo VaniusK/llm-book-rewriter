@@ -56,7 +56,6 @@ class DOCXFileHandler(BaseFileHandler):
 
 
             full_text_for_llm = "".join(text_for_llm_parts)
-            print(full_text_for_llm)
             return full_text_for_llm
 
         except Exception as e:
@@ -70,7 +69,6 @@ class DOCXFileHandler(BaseFileHandler):
         """Update the text of fragments in the document based on the processed string with tags."""
         try:
             processed_text_with_tags = "".join(processed_chunks)
-            print(processed_text_with_tags)
             document = docx.Document(original_filepath)
             new_run_map: Dict[str, Run] = {}
             leftover_runs_map: Dict[str, List[Run]] = {}
