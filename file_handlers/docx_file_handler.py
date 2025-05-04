@@ -1,9 +1,11 @@
 import docx
 import re
 import logging
-from typing import Dict, List
-from file_handlers.base_file_handler import BaseFileHandler
+from typing import Dict, List, Tuple, Any
+import random
 from docx.text.run import Run
+from file_handlers.base_file_handler import BaseFileHandler
+from config import config
 
 
 class DOCXFileHandler(BaseFileHandler):
@@ -14,20 +16,47 @@ class DOCXFileHandler(BaseFileHandler):
         """Generate a unique tag for a text fragment."""
         return f"{self.TAG_PREFIX}{index}{self.TAG_SUFFIX}"
 
+    def _get_run_formatting_signature(self, run: Run) -> Tuple[Any, ...]:
+        """
+        Creates a "fingerprint" of the run's formatting for comparison.
+        It is important to handle None (when the property is not explicitly set).
+        If merging isn't enabled, returns random value.
+        """
+        if not config["processing"]["docx_merge_runs"]:
+            return (
+                random.randint(1, 1000000000),
+                random.randint(1, 1000000000)
+            )
+        font = run.font
+        return (
+            run.bold,
+            run.italic,
+            run.underline,
+            font.name,
+            font.size,
+            font.color.rgb if font.color and font.color.rgb else None
+        )
+
     def extract_text(self, filepath: str) -> str:
         """Extract text from DOCX, inserting tags before each text fragment, and returns a string for LLM"""
         try:
             document = docx.Document(filepath)
             text_for_llm_parts = []
-            run_index = 1
+            run_index = 0
 
             for para in document.paragraphs:
+                current_signature = None
                 for run in para.runs:
-                    tag = self._generate_tag(run_index)
-                    text_for_llm_parts.append(tag + run.text)
-                    run_index += 1
+                    if not current_signature or current_signature != self._get_run_formatting_signature(run):
+                        current_signature = self._get_run_formatting_signature(run)
+                        run_index += 1
+                        tag = self._generate_tag(run_index)
+                        text_for_llm_parts.append(tag)
+                    text_for_llm_parts.append(run.text)
+
 
             full_text_for_llm = "".join(text_for_llm_parts)
+            print(full_text_for_llm)
             return full_text_for_llm
 
         except Exception as e:
@@ -41,14 +70,25 @@ class DOCXFileHandler(BaseFileHandler):
         """Update the text of fragments in the document based on the processed string with tags."""
         try:
             processed_text_with_tags = "".join(processed_chunks)
+            print(processed_text_with_tags)
             document = docx.Document(original_filepath)
             new_run_map: Dict[str, Run] = {}
-            run_index = 1
+            leftover_runs_map: Dict[str, List[Run]] = {}
+            run_index = 0
+
             for para in document.paragraphs:
-                 for run in para.runs:
-                     tag = self._generate_tag(run_index)
-                     new_run_map[tag] = run
-                     run_index += 1
+                current_signature = None
+                for run in para.runs:
+                    if not current_signature or current_signature != self._get_run_formatting_signature(run):
+                        current_signature = self._get_run_formatting_signature(run)
+                        run_index += 1
+                        tag = self._generate_tag(run_index)
+                        new_run_map[tag] = run
+                    else:
+                        tag = self._generate_tag(run_index)
+                        if not tag in leftover_runs_map:
+                            leftover_runs_map[tag] = []
+                        leftover_runs_map[tag].append(run)
 
             tag_pattern = re.compile(f"({self.TAG_PREFIX}\\d+{self.TAG_SUFFIX})", re.DOTALL)
 
@@ -72,6 +112,9 @@ class DOCXFileHandler(BaseFileHandler):
             if missed_tags:
                 logging.warning(f"{len(missed_tags)} original tags were not found in the LLM response. Their corresponding run texts were not updated.")
                 logging.warning(f"Missing tags: {missed_tags}")
+            for tag in leftover_runs_map:
+                for run in leftover_runs_map[tag]:
+                    run.text = ""
 
             document.save(output_filepath)
 

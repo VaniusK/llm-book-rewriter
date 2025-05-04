@@ -9,12 +9,13 @@ openrouter:
   model: "deepseek/deepseek-chat-v3-0324:free"
 
 processing:
-  chunk_size: 3000
+  chunk_size: 16000
   output_dir: "output_books"
   provider: "google"
   workers_amount: 100
   number_of_passes: 1
   retry_if_failed: True
+  docx_merge_runs: True
 
 prompt: |
   **Инструкции**

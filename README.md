@@ -69,6 +69,31 @@
     *   **`processing.number_of_passes`:** Сколько раз каждый фрагмент будет обработан LLM. В текущей версии значение больше 1 **практически бесполезно**. Оставьте **1**.
     *   **`processing.output_dir`:** Папка для сохранения обработанных файлов (например, `"output_books"`).
     *   **`processing.retry_if_failed`:** `True` (рекомендуется), чтобы повторять обработку фрагмента при ошибке, `False` - чтобы пропустить фрагмент (оставить оригинальным).
+    *   **`processing.docx_merge_runs`:** `True` (рекомендуется), чтобы включить слияние одинаковых 'run'-ов (единица текста в формате docx), `False` - чтобы выключить (оставить исходные).
+
+    **⚠️ Внимание!** Эта функция является **экспериментальной**, но её включение (`True`) **КРАЙНЕ РЕКОМЕНДУЕТСЯ**.
+
+    **Что она делает?** Объединяет соседние участки текста (элементы `<run>` в DOCX), если у них **полностью совпадает форматирование** (шрифт, размер, цвет, стиль и т.д.).
+
+    **Почему это так важно?**
+    *   **🚀 Значительно повышает качество и стабильность:** Убирает "шум" из документа, позволяя моделям обрабатывать текст как единое целое.
+    *   **💰 Снижает стоимость обработки:** Уменьшает количество служебной информации и общую длину текста, передаваемого модели.
+
+    **Потенциальный недостаток:** Будучи экспериментальной, функция теоретически может привести к потере *некоторых* специфических метаданных(история правок, источник), связанных с границами исходных `<run>`. Однако основное форматирование (цвет, стиль, размер и т.д.) при слиянии **должно сохраняться**, так как объединяются только идентично отформатированные участки.
+
+    **Наглядный пример:**
+    Допустим, в документе есть строка "Маша ела кашу". Из-за особенностей форматирования, копирования или конвертации, внутри DOCX она может быть разбита на множество `<run>` (технически это элементы `<w:r>`, но для простоты используем `<RUN>`):
+    `<RUN1/>М<RUN2/>АШ</RUN2>А ЕЛА КА<RUN3/>ШУ`
+
+    *   **Без слияния (`False`):** Модель получит нечто вроде `@М@АШ@А ЕЛА КА@ШУ` (утрированно, реальное представление зависит от препроцессинга, но суть в фрагментации).
+        *   Это **увеличивает стоимость** из-за избыточных данных/токенов.
+        *   Модели **крайне сложно** адекватно обработать такой "рваный" текст. Результат может быть непредсказуемым: буквы переставятся, слова исказятся, текст может "перепрыгнуть" в другой абзац или вовсе исчезнуть.
+
+    *   **Со слиянием (`True`):** Если все эти `<RUN>` имеют одинаковое форматирование, функция объединит их:
+        `<RUN/>Маша ела кашу`
+        Такой текст модель обрабатывает **корректно, надежно и дешевле**.
+
+    **Вывод:** Несмотря на статус экспериментальной, **настоятельно рекомендуется** оставлять эту опцию включенной (`True`) для большинства задач обработки DOCX-файлов.
     *   **`prompt`:** **Очень важный параметр.** Это инструкция для LLM.
         *   Отредактируйте текст промпта под ваши задачи (исправление ошибок, переписывание, стилизация и т.д.).
         *   Промпт должен содержать плейсхолдер `{text_chunk}`, куда будет подставлен фрагмент текста.
@@ -117,32 +142,30 @@
 
 # LLM Book Rewriter
 
-[Go to Русский](#русский)
+[Go to Русский](#Русский)
 
 ## 📖 Description
 
-This program is designed to assist authors, editors, or **readers** in batch processing book texts using large language models (LLMs). It automates the process of applying changes (e.g., error correction, stylization, paraphrasing) to large text files by splitting them into manageable chunks, processing each chunk via an LLM, and reassembling the result. For instance, a reader can download a purchased book in FB2 format, fix errors using this program, and then read it comfortably.
+This program is designed to assist authors, editors, or readers in batch processing book texts using large language models (LLM). It automates the process of applying changes (e.g., error correction, stylization, paraphrasing) to large text files by breaking them down into manageable chunks, processing each chunk via an LLM, and reassembling the result. For example, a reader can download a purchased book in FB2 format, correct errors in it using the program, and read it comfortably.
 
 **Key Features:**
 
 *   **Chunking:** Splits large texts into chunks of a specified size, attempting to respect sentence or tag boundaries.
 *   **LLM Integration:** Supports Google Gemini and OpenRouter as LLM providers.
-*   **Asynchronous Processing:** Uses `asyncio` for parallel chunk processing, significantly speeding up the workflow.
-*   **Customizable Prompt:** Allows the user to precisely instruct the LLM on the changes needed in the text.
+*   **Asynchronous Processing:** Uses `asyncio` for parallel chunk processing, significantly speeding up the process.
+*   **Customizable Prompt:** Allows the user to specify exactly what changes the LLM should make to the text.
 *   **Format Support:** Works with `.fb2`, `.txt`, and `.docx` files.
-*   **Heuristics:** Applies optional pre- and post-processing heuristics to improve processing quality.
+*   **Heuristics:** Applies optional heuristics before and after LLM processing to improve output quality.
 *   **State Persistence:** Caches processed chunks, allowing work to be resumed after interruption without losing progress.
-*   **Error Handling & Retries:** Can handle API errors (like rate limits) and automatically retry failed chunk processing attempts.
-*   **Tag Validation:** Checks that the LLM hasn't added or removed tags in formats where they are critical (`fb2`, `docx`).
-*   **Formatting Preservation:** Attempts to preserve original whitespace around text and tags when formatting the LLM's response.
+*   **Error Handling and Retries:** Handles API errors (e.g., rate limits) and automatically retries failed chunk processing attempts.
+*   **Tag Validation:** Verifies that the LLM has not added or removed tags in formats where they are important (`fb2`, `docx`).
+*   **Formatting Preservation:** Attempts to preserve original whitespace around text and tags when formatting the LLM response.
 
 ## 📦 Supported Formats
 
 *   **FB2:** Extracts the content of the `<body>` tag, processes it, and replaces the original body with the processed text. (Uses the `lxml` library for XML parsing).
 *   **TXT:** Reads the entire file as plain text, processes it, and writes the result to a new file.
-*   **DOCX:** Processes text run-by-run, inserting temporary `<RUN/>` tags for tracking. After LLM processing, it replaces the text in the corresponding runs. (Uses the `python-docx` library).
-
-*(Note: Library mentions are for information; users don't need to install them separately if using the compiled version).*
+*   **DOCX:** Processes text in parts (`run`), inserting temporary `<RUN/>` tags for tracking. After LLM processing, it replaces the text in the corresponding `run`s. (Uses the `python-docx` library).
 
 ## 🔑 API Keys and LLM Providers
 
@@ -150,79 +173,106 @@ The program supports two LLM providers:
 
 1.  **Google Gemini:**
     *   **Getting a Key:**
-        1.  Go to: [https://aistudio.google.com/apikey](https://aistudio.google.com/apikey)
+        1.  Go to the link: [https://aistudio.google.com/apikey](https://aistudio.google.com/apikey)
         2.  Follow Google's instructions to create and obtain your API key.
-    *   **Models (examples):** `models/gemini-2.0-flash`, `models/gemini-2.5-pro-exp-03-25`.
-    *   **Free Limits (approximate):**
-        *   `models/gemini-2.0-flash`: ~1500 requests per day.
-        *   `models/gemini-2.5-pro-exp-03-25`: ~25 requests per day.
+    *   **Models (examples):** `models/gemini-1.0-pro`, `models/gemini-1.5-flash-latest`.
+    *   **Free Tier Limits (approximate):**
+        *   `models/gemini-1.5-flash-latest`: ~60 requests per minute (RPM). Limits might vary.
+        *   `models/gemini-1.0-pro`: ~2 RPM.
 2.  **OpenRouter:**
-    *   **Getting a Key:** Sign up at [OpenRouter.ai](https://openrouter.ai/) and get an API key.
-    *   **Models (examples):** `deepseek/deepseek-chat-v3-0324:free`, `google/gemini-flash-1.5`. OpenRouter provides access to numerous models, including free tiers.
-    *   **Free Limits (approximate):** ~50 requests per day for models in the "Free" category.
+    *   **Getting a Key:** Register at [OpenRouter.ai](https://openrouter.ai/) and obtain an API key.
+    *   **Models (examples):** `google/gemini-flash-1.5`, `anthropic/claude-3-haiku`. OpenRouter provides access to numerous models, including free and paid ones with varying limits.
+    *   **Free Tier Limits (approximate):** Varies by model. Check the OpenRouter models page for details on free tier availability and limits.
 
 ## ❗ Important Notes
 
-*   **API Access:** Access to the Google Gemini API is currently **blocked in the Russian Federation**. Stable operation might require connecting from other regions (e.g., **the Netherlands** works well). OpenRouter can serve as an alternative.
-*   **Data Privacy (Google):** When making requests from countries in the European Economic Area (EEA), Switzerland, or the United Kingdom, Google, in accordance with its policy, **does not use your data to train models.**
-*   **Content Filters (Google Gemini):** Gemini models have built-in safety filters. Sometimes they can be **overly aggressive**, blocking harmless text chunks. If you encounter frequent blocks, try simplifying the prompt, using a less strict model (Flash), or switching to OpenRouter, where filtering policies might differ.
-*   **Google Docs Change Tracking (for DOCX):** If you want to compare the original `.docx` and the processed file using Google Docs' "Compare documents" feature, the standard method (uploading both) might not show changes correctly. For reliable comparison:
+*   **API Access:** Access to the Google Gemini API may be restricted in certain regions (e.g., **Russian Federation** at the time of writing). It is confirmed to work in regions like the **Netherlands**. OpenRouter can serve as an alternative.
+*   **Data Privacy (Google):** When making requests from countries in the European Economic Area (EEA) (**including the Netherlands**), Switzerland, or the UK, Google, according to its policy, **does not use your data for model training.** Check Google's current policies for confirmation.
+*   **Content Filters (Google Gemini):** Gemini models have built-in safety filters. Sometimes they can be **overly aggressive**, blocking even harmless text fragments. If you encounter frequent blocks (`"finish_reason": "SAFETY"`), try simplifying the prompt, using a different model (Flash often has less strict filtering than Pro), adjusting safety settings if available via the API, or switching to OpenRouter, where filtering policies may differ or be configurable.
+*   **Google Docs Change Tracking (for DOCX):** If you want to compare the original `.docx` and the processed file using the 'Compare documents' feature in Google Docs, the standard method (uploading both) might not show changes correctly due to internal differences in how Word and Google Docs handle DOCX structures. For reliable comparison:
     1.  Upload the *original* file (`.docx`) to Google Docs.
-    2.  **Download** it back from Google Docs as a `.docx` file. This downloaded file will be your "base" version for comparison.
-    3.  Upload the file processed by the script (`_rewritten.docx`).
-    4.  Use "Tools" -> "Compare documents", selecting the file downloaded in step 2 as the base and the file uploaded in step 3 as the comparison document.
+    2.  **Download** it back from Google Docs in `.docx` format. This downloaded file will be your "base" version for comparison.
+    3.  Upload the file processed by this program (`_rewritten.docx`).
+    4.  Use the 'Tools' -> 'Compare documents' feature in Google Docs, selecting the file downloaded in step 2 as the base and the file uploaded in step 3 as the comparison document.
 
 ## ⚙️ Configuration
 
-1.  Run the program's executable file (`.exe`). On the first run (or if `config.yaml` is missing), it will be created next to the program with default settings.
+1.  Place the program's executable file (`.exe` or the script) in the same folder as `config.yaml`.
 2.  Open the `config.yaml` file in a text editor and make the necessary changes:
-    *   **`google.api_key` / `openrouter.api_key`:** Paste your API key for the chosen provider within the quotes.
+    *   **`google.api_key` / `openrouter.api_key`:** Paste your API key for the chosen provider within quotes. Leave empty or remove if not using that provider.
     *   **`processing.provider`:** Specify `google` or `openrouter`.
-    *   **`google.model` / `openrouter.model`:** Specify the desired LLM model (see examples above).
-    *   **`processing.chunk_size`:** Chunk size in characters. **Recommended: 8000.** Smaller values might improve quality but increase requests and time. Larger values are faster but may reduce quality.
-    *   **`processing.workers_amount`:** Number of concurrent API requests. Higher values **potentially increase processing speed**. The program is stable at any value, but very high settings can lead to many errors (429 - rate limit) in the console.
-        *   For "slow" models (e.g., `gemini-2.5-pro-exp-03-25`): recommend **1**.
-        *   For "fast" models (e.g., `gemini-2.0-flash`): recommend **10-20**.
-    *   **`processing.number_of_passes`:** How many times each chunk is processed. In the current version, values greater than 1 are **practically useless**. Keep it at **1**.
+    *   **`google.model` / `openrouter.model`:** Specify the desired LLM model ID (see examples above or provider documentation).
+    *   **`processing.chunk_size`:** Chunk size in characters. **Recommended value: 8000.** Smaller values might improve processing quality (especially for complex prompts) but increase the number of API calls and total time. Larger values speed things up but may decrease quality or hit model context limits.
+    *   **`processing.workers_amount`:** Number of concurrent requests to the API. High values **potentially increase processing speed**. The program is stable at any value, but excessively high values can lead to many errors (e.g., `429 Resource Exhausted`, `500 Internal Server Error`) in the console, especially if hitting API rate limits.
+        *   For "slow" or rate-limited models (e.g., Gemini Pro free tier): **1-3** is recommended.
+        *   For "fast" or higher-limit models (e.g., Gemini Flash, paid tiers): **10-20** or more might work, depending on your specific API limits. Adjust based on observed errors.
+    *   **`processing.number_of_passes`:** How many times each chunk will be processed by the LLM. In the current version, a value greater than 1 has **limited practical use** unless specifically designed into the prompt or workflow. Leave it as **1** for standard rewriting.
     *   **`processing.output_dir`:** Folder for saving processed files (e.g., `"output_books"`).
-    *   **`processing.retry_if_failed`:** `True` (recommended) to retry processing a chunk on error, `False` to skip the chunk (keep original content).
-    *   **`prompt`:** **A crucial parameter.** This is the instruction given to the LLM.
-        *   Edit the prompt text to match your specific task (error correction, rewriting, stylization, etc.).
-        *   The prompt must include the placeholder `{text_chunk}`, which will be replaced with the text fragment.
-        *   **Important:** The default prompt is in Russian. If you are processing text in another language, **translate the entire prompt into that language**, including the instructions about preserving tags and whitespace. LLM quality heavily depends on the language and clarity of the instructions.
-    *   **`heuristics`:** Heuristic settings (see below). Enable/disable by setting `True` or `False`.
+    *   **`processing.retry_if_failed`:** `True` (recommended) to retry processing a chunk on recoverable API errors (like rate limits or temporary server issues), `False` to skip the chunk (leave it original) upon failure.
+    *   **`processing.docx_merge_runs`:** `True` (recommended) to enable merging of adjacent identically formatted runs in DOCX files before processing, `False` to disable (process runs as they are).
+
+    **⚠️ Warning!** This feature is **experimental**, but enabling it (`True`) is **HIGHLY RECOMMENDED** for DOCX processing.
+
+    **What it does:** Merges adjacent text segments ( `<w:r>` or "run" elements in DOCX) if their **formatting is completely identical** (font, size, color, bold, italics, etc.).
+
+    **Why is it important?**
+    *   **🚀 Significantly improves quality and stability:** Reduces document "noise," allowing the LLM to process text more coherently. Avoids issues caused by excessive fragmentation.
+    *   **💰 Reduces processing cost:** Decreases the amount of redundant formatting information and the overall text length sent to the LLM, potentially lowering token usage.
+
+    **Potential drawback:** Being experimental, the feature could theoretically lead to the loss of *some* specific metadata (like detailed edit history or certain complex field information) tied to the original `<w:r>` boundaries. However, the main visual formatting (color, style, size, etc.) **should be preserved** during merging, as only identically formatted runs are combined.
+
+    **Illustrative Example:**
+    Suppose a document contains the line "Mary ate porridge". Due to formatting quirks, copy-pasting, or conversion, within the DOCX XML, it might be split into multiple runs:
+    `<RUN1>M</RUN1><RUN2>ary</RUN2> ate porr<RUN3>idge</RUN3>`
+
+    *   **Without merging (`False`):** The preprocessor might send something like `@M@ary@ ate porr@idge@` to the LLM (simplified representation; actual output depends on preprocessing, but the core issue is fragmentation).
+        *   This **increases cost** due to extra placeholder/tag data.
+        *   LLMs often **struggle** to process such fragmented text correctly. The result can be unpredictable: letters might get swapped, words distorted, text might jump paragraphs or disappear entirely.
+
+    *   **With merging (`True`):** If all these runs have identical formatting, the function merges them:
+        `<RUN>Mary ate porridge</RUN>`
+        The LLM receives coherent text, which it can process **correctly, reliably, and more cheaply**.
+
+    **Conclusion:** Despite its experimental status, it is **strongly recommended** to keep this option enabled (`True`) for most DOCX processing tasks.
+    *   **`prompt`:** **A very important parameter.** This is the instruction for the LLM.
+        *   Edit the prompt text for your specific tasks (e.g., fix grammar and spelling, rewrite in a different style, summarize).
+        *   The prompt must contain the placeholder `{text_chunk}`, where the text fragment will be inserted.
+        *   The default Russian prompt is very conservative, aiming to minimize changes to the author's style. You might want to make it more or less assertive depending on your goal.
+        *   **Important:** The default prompt is in Russian. If you are processing text in another language (e.g., English), **translate the prompt into that language**, including any instructions about preserving tags (or placeholders if using heuristics) and whitespace. LLM performance heavily depends on the language and clarity of the instructions.
+    *   **`heuristics`:** Settings for heuristics (see below). Enabled/disabled by setting `True` or `False`.
 
 ## ✨ Heuristics
 
-Heuristics are optional text transformations applied *before* sending to the LLM (preprocessing) and *after* receiving the response (postprocessing), designed to **improve processing quality**. Configure them in the `config.yaml` file under the `heuristics` section.
+Heuristics are optional text transformations applied *before* sending to the LLM (preprocessing) and *after* receiving the response (postprocessing), designed to **improve processing quality**. Configured in the `config.yaml` file under the `heuristics` section.
 
-*   **`remove_commas` (Preprocessing, 1st pass only):**
+*   **`remove_commas` (Preprocessing, only 1st pass):**
     *   **What it does:** Removes all commas from the chunk *before* sending it to the LLM (only on the first pass if `number_of_passes: 1`).
-    *   **When to use:** Can improve results if the original text has **many unnecessary or misplaced commas**, and you want the model to repunctuate from scratch. **Recommended for strong models** (e.g., `gemini-2.5-pro-exp-03-25`) that are better at restoring punctuation.
-    *   **Caveats:** Weaker models might fail to reinsert commas correctly or at all.
+    *   **When to use:** Can potentially improve results if the original text has **many unnecessary or incorrectly placed commas**, and you want the model to re-punctuate it "from scratch". **Recommended for powerful models** (like `Gemini 1.5 Pro`, `Claude 3 Opus`) that are good at restoring punctuation.
+    *   **Caveats:** Weaker models might fail to reinsert commas correctly or at all. Use with caution.
 *   **`replace_tags_with_placeholder` (Preprocessing + Postprocessing):**
     *   **What it does:**
-        *   *Preprocessing:* Finds all tags like `<...>` (e.g., `<p>`, `</emphasis>`, `<RUN123/>`) and replaces them with special placeholder symbols (e.g., `@`, `#`, `$`). Information about the replaced tags is stored.
-        *   *Postprocessing:* After getting the response from the LLM, replaces the placeholders back with the original tags in the correct order.
-    *   **When to use:** **Strongly recommended for FB2 and DOCX formats.** LLMs often struggle with preserving HTML/XML-like tags. This heuristic "hides" the tags from the LLM. **Weak models (especially local ones, not used here) might not function correctly with tagged formats without this heuristic.**
-    *   **Caveats:** If the LLM deletes or adds a placeholder symbol in the text, tag restoration will fail, and validation (`validate_response`) will likely fail.
+        *   *Preprocessing:* Finds all tags like `<...>` (e.g., `<p>`, `</emphasis>`, `<RUN123/>`) and replaces them with unique, simple placeholder symbols (e.g., `@`, `#`, `$`, or more complex unique markers). Information about the replaced tags and their order is stored.
+        *   *Postprocessing:* After receiving the response from the LLM, replaces the placeholder symbols back with the original tags in the correct order.
+    *   **When to use:** **Strongly recommended for FB2 and DOCX formats.** LLMs often struggle to preserve HTML/XML-like tags correctly. This heuristic effectively "hides" the tags from the LLM. **Weaker models (especially local ones) might completely fail to process tagged formats without this heuristic.**
+    *   **Caveats:** If the LLM deletes or adds one of the placeholder symbols in the text, tag restoration will fail, and the tag validation check (`validate_response`) will likely raise an error. The prompt should instruct the LLM to keep these special symbols untouched.
 
-## 🚀 Running
+## 🚀 Usage
 
-1.  Place your books (`.fb2`, `.txt`, `.docx`) in the same folder as the program executable (`.exe`) and the `config.yaml` file.
-2.  Run the `.exe` file.
-3.  The program will start processing the found files one by one. You'll see logs in the console.
-4.  Processed files will be saved in the folder specified by `processing.output_dir` (default `output_books`), with the suffix `_rewritten` (e.g., `my_book_rewritten.fb2`).
-5.  **Cache:** During processing, a `book_temp` directory is created, containing subdirectories for each book with processed chunks (`chunkXXXXX.txt`). If the process is interrupted, the next run will read these files and resume from where it left off.
-6.  **Clearing the Cache:** If you want to reprocess a book from scratch (e.g., after changing the prompt or settings), delete the corresponding subdirectory within `book_temp` (e.g., `book_temp/my_book_name/`).
+1.  Place your book files (`.fb2`, `.txt`, `.docx`) in the same folder as the program executable (`.exe` or script) and the `config.yaml` file.
+2.  Run the executable (`.exe`) or script (e.g., `python main.py`).
+3.  The program will find compatible files in the current directory and start processing them one by one. You will see progress logs in the console, including chunk processing status, retries, and errors.
+4.  Processed files will be saved in the folder specified by `processing.output_dir` (default is `output_books`), with the suffix `_rewritten` added to the original filename (e.g., `my_book_rewritten.fb2`).
+5.  **Cache:** During processing, a `book_temp` folder is created. Inside, subfolders for each book store the processed chunks (e.g., `chunk00001.txt`, `chunk00002.txt`). If the process is interrupted (e.g., Ctrl+C, system shutdown, error), on the next run for the same book, the program will read these cached files and resume processing only the remaining chunks. **Optional:** After processing, you can open the original and `_rewritten` DOCX files in Word or Google Docs (using the comparison method described in "Important Notes") to review the changes made by the LLM.
+6.  **Reset Cache:** If you want to reprocess a book from scratch (e.g., after changing the prompt, model, or other settings), simply delete the corresponding subfolder inside `book_temp` (e.g., delete `book_temp/my_book_name/`). The program will then process all chunks again on the next run.
 
 ## 🔧 Troubleshooting
 
-*   **`RESOURCE_EXHAUSTED` (Error 429 in logs):** Too many concurrent API requests, **or** the daily free request limit is exhausted (or funds ran out if using a paid plan). Decrease `processing.workers_amount` in `config.yaml`, wait for the next day, or top up your balance.
-*   **Messages about blocking from Google (Filter):** Google Gemini's safety filter was triggered. See the "Important Notes" section. Try modifying the prompt, using a different model, or switching providers (OpenRouter).
-*   **`ValidationFailedError`:** The LLM changed the number of `<` or `>` tags. Often happens if the `replace_tags_with_placeholder` heuristic is disabled for FB2/DOCX, or if the LLM added/removed a placeholder symbol when the heuristic was enabled. Ensure the heuristic is enabled for FB2/DOCX and the prompt clearly instructs to preserve tags/placeholders.
-*   **Slow Processing:** Increase `processing.workers_amount` (cautiously!) or `processing.chunk_size`. Use faster models (Flash instead of Pro).
+*   **`RESOURCE_EXHAUSTED` (Error 429 in logs):** You are sending too many requests too quickly, exceeding your API rate limit, or you have exhausted your daily/monthly free quota or account balance. Decrease the `processing.workers_amount` in `config.yaml`, wait for the rate limit period to reset (often a minute or a day), or check your account balance/quota.
+*   **Google Blocking Messages (Filter/Safety):** Google Gemini's safety filter was triggered (often indicated by `"finish_reason": "SAFETY"` in logs). See the "Important Notes" section regarding Content Filters. Try modifying the prompt to be less likely to trigger filters, use a model known for less aggressive filtering (like Flash), potentially adjust safety settings if the API allows, or switch providers (OpenRouter).
+*   **`ValidationFailedError` (or similar tag validation errors):** The LLM modified the number or structure of tags (or placeholders, if using the `replace_tags_with_placeholder` heuristic). This often occurs if the heuristic is disabled for FB2/DOCX, or if the LLM (despite instructions) added/deleted a placeholder symbol. Sometimes it's a transient issue, and a retry (if `retry_if_failed: True`) might succeed. Ensure the heuristic is enabled for FB2/DOCX and the prompt clearly instructs the LLM to preserve tags/placeholders.
+*   **Slow Processing:** Increase `processing.workers_amount` (carefully monitor for rate limit errors!) or consider increasing `processing.chunk_size` (trade-off with potential quality decrease). Using faster models (like Gemini Flash instead of Pro, or Haiku instead of Opus) can also significantly speed up processing. Check your network connection as well.
+*   **`500 Internal Server Error` (or similar 5xx errors):** This usually indicates a temporary problem on the LLM provider's side. If `retry_if_failed: True`, the program should automatically retry after a delay. If errors persist, check the provider's status page or try again later.
 
 ## 📄 License
 
-This project is licensed under the MIT License. See the `LICENSE` file for details.
+This project is distributed under the MIT License. See the `LICENSE` file for details.
