@@ -1,4 +1,5 @@
 import logging
+import asyncio
 from config import config
 
 logging.basicConfig(
@@ -12,7 +13,7 @@ import os
 from book_processor import BookProcessor
 
 supported_extensions = ["fb2", "txt", "docx"]
-sys_files = ["processed_chunks.txt", "processed_chunks_count.txt", "requirements.txt"]
+sys_files = ["requirements.txt"]
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,12 @@ if __name__ == "__main__":
         if filename in sys_files:
             continue
         extension = filename[filename.rfind(".") + 1:]
+        if extension != "txt":
+            continue
+        if filename == "Krasnogorov_Inzhener-protiv.-HQ3BA.815763.fb2":
+            continue
+        if filename != "test2.txt":
+            continue
         if extension in supported_extensions:
             book_processor = BookProcessor(config["processing"]["provider"], extension)
-            book_processor.process_book(filename)
+            asyncio.get_event_loop().run_until_complete(book_processor.process_book(filename))

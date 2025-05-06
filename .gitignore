@@ -7,4 +7,6 @@
 config_local.yaml
 *.fb2
 *.zip
+*.txt
 *.exe
+*.png

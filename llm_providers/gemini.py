@@ -3,7 +3,7 @@ from google.genai import types as genai_types
 from llm_providers.base_llm import BaseLLM
 from config import config
 
-class Google(BaseLLM):
+class Gemini(BaseLLM):
     def __init__(self, model_name: str, api_key: str):
         self.client = genai.Client(api_key=api_key)
         self.model = model_name
