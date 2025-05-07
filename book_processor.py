@@ -18,7 +18,7 @@ class BookProcessor:
     A class for processing books by splitting them into chunks,
     processing each chunk with an LLM, and reassembling the processed chunks.
     """
-    def __init__(self, llm_provider: str, file_type: str):
+    def __init__(self, llm_provider: str, file_type: str, result_filename: str):
         self.llm = LLM(llm_provider).llm
         os.makedirs(config["processing"]["output_dir"], exist_ok=True)
         self.logger = logging.getLogger(__name__)
@@ -26,6 +26,7 @@ class BookProcessor:
         self.heuristic_applier = HeuristicApplier()
         self.book_extension = file_type
         self.semaphore = asyncio.Semaphore(config["processing"]["workers_amount"])
+        self.result_filename = result_filename
 
     def split_into_chunks(self, text: str, chunk_size: int) -> list[str]:
         """Split text into chunks of(roughly) given size, considering tag/sentence endings."""
@@ -148,7 +149,7 @@ class BookProcessor:
         """Process book by modifying each chunk with LLM."""
         self.logger.info(f"Processing: {filepath}")
         book_name = filepath[:filepath.rfind(".")]
-        output_filepath = os.path.join(config["processing"]["output_dir"], f"{book_name}_rewritten.{self.book_extension}")
+        output_filepath = os.path.join(config["processing"]["output_dir"], f"{self.result_filename}.{self.book_extension}")
 
         text = self.file_handler.extract_text(filepath)
         chunks = self.split_into_chunks(text, config["processing"]["chunk_size"])

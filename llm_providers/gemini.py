@@ -33,7 +33,7 @@ class Gemini(BaseLLM):
             top_k=64,
         )
         if "2.5-flash" in model_name:
-            self.model_config.thinking_config=genai_types.ThinkingConfig(thinking_budget=config["google"]["thinking_budget"])
+            self.model_config.thinking_config=genai_types.ThinkingConfig(thinking_budget=config["gemini"]["thinking_budget"])
 
     async def generate(self, prompt: str) -> str:
         response = await self.client.aio.models.generate_content(

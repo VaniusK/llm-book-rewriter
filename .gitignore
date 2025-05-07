@@ -4,6 +4,7 @@
 /.idea
 /build
 /dist
+/performance_tests
 config_local.yaml
 *.fb2
 *.zip
