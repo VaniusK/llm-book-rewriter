@@ -23,12 +23,6 @@ if __name__ == "__main__":
         if filename in sys_files:
             continue
         extension = filename[filename.rfind(".") + 1:]
-        if extension != "fb2":
-            continue
-        if filename == "Krasnogorov_Inzhener-protiv.-HQ3BA.815763.fb2":
-            continue
-        if filename != "test.fb2":
-            continue
         if extension in supported_extensions:
             for i in range(1):
                 book_processor = BookProcessor(config["processing"]["provider"], extension, f"{filename[:filename.rfind('.')]}_rewritten")
