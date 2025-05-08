@@ -42,10 +42,10 @@
 
 Программа поддерживает два провайдера LLM:
 
-1.  **Gemini Gemini:**
+1.  **Google Gemini:**
     *   **Получение ключа:**
         1.  Перейдите по ссылке: [https://aistudio.google.com/apikey](https://aistudio.google.com/apikey)
-        2.  Следуйте инструкциям Gemini для создания и получения вашего API-ключа.
+        2.  Следуйте инструкциям для создания и получения вашего API-ключа.
     *   **Модели (примеры):** `models/gemini-2.0-flash`, `models/gemini-2.5-pro-exp-03-25`.
     *   **Бесплатные лимиты (примерные):**
         *   `models/gemini-2.0-flash`: ~1500 запросов в день.
@@ -57,12 +57,12 @@
 
 ## ❗ Важные Замечания
 
-*   **Доступ к API:** В **Российской Федерации** доступ к API Gemini Gemini на данный момент **заблокирован**. В **Нидерландах**, впрочем, всё работает. OpenRouter может служить альтернативой.
-*   **Конфиденциальность данных (Gemini):** При выполнении запросов из стран Европейской экономической зоны (EEA)(**и Нидерланды сюда входят**), Швейцарии или Великобритании, Gemini в соответствии со своей политикой, **не использует ваши данные для обучения моделей.**
-*   **Фильтры контента (Gemini Gemini):** Модели Gemini имеют встроенные фильтры безопасности. Иногда они могут срабатывать **слишком агрессивно**, блокируя даже безобидные фрагменты текста. Если вы сталкиваетесь с частыми блокировками, попробуйте упростить промпт, использовать менее строгую модель (Flash) или переключиться на OpenRouter, где политика фильтрации может отличаться.
-*   **Отслеживание изменений в Gemini Docs (для DOCX):** Если вы хотите сравнить оригинальный `.docx` и обработанный файл с помощью функции "Сравнить документы" в Gemini Docs, стандартный способ (загрузить оба) может не показать изменения корректно. Чтобы сравнение работало надежно:
-    1.  Загрузите *оригинальный* файл (`.docx`) в Gemini Docs.
-    2.  **Скачайте** его обратно из Gemini Docs в формате `.docx`. Этот скачанный файл будет вашей "базовой" версией для сравнения.
+*   **Доступ к API:** В **Российской Федерации** доступ к API Google Gemini на данный момент **заблокирован**. В **Нидерландах**, впрочем, всё работает. OpenRouter может служить альтернативой.
+*   **Конфиденциальность данных (Google):** При выполнении запросов из стран Европейской экономической зоны (EEA)(**и Нидерланды сюда входят**), Швейцарии или Великобритании, Gemini в соответствии со своей политикой, **не использует ваши данные для обучения моделей.**
+*   **Фильтры контента (Google Gemini):** Модели Gemini имеют встроенные фильтры безопасности. Иногда они могут срабатывать **слишком агрессивно**, блокируя даже безобидные фрагменты текста. Если вы сталкиваетесь с частыми блокировками, попробуйте упростить промпт, использовать менее строгую модель (Flash) или переключиться на OpenRouter, где политика фильтрации может отличаться.
+*   **Отслеживание изменений в Google Docs (для DOCX):** Если вы хотите сравнить оригинальный `.docx` и обработанный файл с помощью функции "Сравнить документы" в Gemini Docs, стандартный способ (загрузить оба) может не показать изменения корректно. Чтобы сравнение работало надежно:
+    1.  Загрузите *оригинальный* файл (`.docx`) в Google Docs.
+    2.  **Скачайте** его обратно из Google Docs в формате `.docx`. Этот скачанный файл будет вашей "базовой" версией для сравнения.
     3.  Загрузите обработанный программой файл (`_rewritten.docx`).
     4.  Используйте функцию "Инструменты" -> "Сравнить документы", выбрав скачанный на шаге 2 файл в качестве базового и загруженный на шаге 3 файл в качестве сравниваемого.
 
@@ -133,13 +133,13 @@
 2.  Запустите `.exe` файл.
 3.  Программа начнет обрабатывать найденные файлы один за другим. Вы будете видеть логи процесса в консоли.
 4.  Обработанные файлы будут сохранены в папке, указанной в `processing.output_dir` (по умолчанию `output_books`), с суффиксом `_rewritten` (например, `my_book_rewritten.fb2`).
-5.  **Кеш:** Во время обработки создается папка `book_temp`, содержащая подпапки для каждой книги с обработанными фрагментами (`chunkXXXXX.txt`). Если процесс прервется, при следующем запуске программа прочитает эти файлы и продолжит с того места, где остановилась. **Опционально**: Откройте в режиме просмотра изменений в Word/Gemini Docs и проверьте предложенные правки.
+5.  **Кеш:** Во время обработки создается папка `book_temp`, содержащая подпапки для каждой книги с обработанными фрагментами (`chunkXXXXX.txt`). Если процесс прервется, при следующем запуске программа прочитает эти файлы и продолжит с того места, где остановилась. **Опционально**: Откройте в режиме просмотра изменений в Word/Google Docs и проверьте предложенные правки.
 6.  **Сброс кеша:** Если вы хотите начать обработку книги заново (например, после изменения промпта или настроек), удалите соответствующую подпапку внутри `book_temp` (например, `book_temp/my_book_name/`).
 
 ## 🔧 Устранение Неполадок
 
 *   **`RESOURCE_EXHAUSTED` (Ошибка 429 в логах):** Слишком много одновременных запросов к API, или исчерпан дневной лимит бесплатных запросов, или закончились средства на балансе при платном использовании. Уменьшите значение `processing.workers_amount` в `config.yaml` или подождите следующего дня/пополните баланс.
-*   **Сообщения о блокировке от Gemini (Filter):** Сработал фильтр безопасности Gemini Gemini. См. раздел "Важные Замечания". Попробуйте изменить промпт, использовать другую модель или провайдера (OpenRouter).
+*   **Сообщения о блокировке от Google (Filter):** Сработал фильтр безопасности Google Gemini. См. раздел "Важные Замечания". Попробуйте изменить промпт, использовать другую модель или провайдера (OpenRouter).
 *   **`ValidationFailedError`:** LLM изменила количество тегов `<` или `>`. Часто случается, если эвристика `replace_tags_with_placeholder` отключена для FB2/DOCX, или если LLM добавила/удалила символ-плейсхолдер при включенной эвристике. Иногда случается, обычно со второй попытки модель справляется. Убедитесь, что эвристика включена для FB2/DOCX и промпт содержит четкую инструкцию сохранять теги/плейсхолдеры.
 *   **Медленная обработка:** Увеличьте `processing.workers_amount` (осторожно!) или `processing.chunk_size`. Используйте более быстрые модели (Flash вместо Pro).
 
@@ -162,7 +162,7 @@ This program is designed to assist authors, editors, or readers in batch process
 **Key Features:**
 
 *   **Chunking:** Splits large texts into chunks of a specified size, attempting to respect sentence or tag boundaries.
-*   **LLM Integration:** Supports Gemini Gemini and OpenRouter as LLM providers.
+*   **LLM Integration:** Supports Google Gemini and OpenRouter as LLM providers.
 *   **Asynchronous Processing:** Uses `asyncio` for parallel chunk processing, significantly speeding up the process.
 *   **Customizable Prompt:** Allows the user to specify exactly what changes the LLM should make to the text.
 *   **Format Support:** Works with `.fb2`, `.txt`, and `.docx` files.
@@ -182,10 +182,10 @@ This program is designed to assist authors, editors, or readers in batch process
 
 The program supports two LLM providers:
 
-1.  **Gemini Gemini:**
+1.  **Google Gemini:**
     *   **Getting a Key:**
         1.  Go to the link: [https://aistudio.google.com/apikey](https://aistudio.google.com/apikey)
-        2.  Follow Gemini's instructions to create and obtain your API key.
+        2.  Follow instructions to create and obtain your API key.
     *   **Models (examples):** `models/gemini-2.0-flash`, `models/gemini-2.5-pro-exp-03-25`.
     *   **Free Tier Limits (approximate):**
         *   `models/gemini-2.0-flash`: ~1500 requests per day.
@@ -197,12 +197,12 @@ The program supports two LLM providers:
 
 ## ❗ Important Notes
 
-*   **API Access:** In the **Russian Federation**, access to the Gemini Gemini API is currently **blocked**. In the **Netherlands**, however, everything works. OpenRouter can serve as an alternative.
+*   **API Access:** In the **Russian Federation**, access to the Google Gemini API is currently **blocked**. In the **Netherlands**, however, everything works. OpenRouter can serve as an alternative.
 *   **Data Privacy (Gemini):** When making requests from countries in the European Economic Area (EEA) (**including the Netherlands**), Switzerland, or the UK, Gemini, according to its policy, **does not use your data for model training.**
-*   **Content Filters (Gemini Gemini):** Gemini models have built-in safety filters. Sometimes they can be **overly aggressive**, blocking even harmless text fragments. If you encounter frequent blocks, try simplifying the prompt, using a less strict model (Flash), or switching to OpenRouter, where filtering policies may differ.
-*   **Gemini Docs Change Tracking (for DOCX):** If you want to compare the original `.docx` and the processed file using the 'Compare documents' feature in Gemini Docs, the standard method (uploading both) might not show changes correctly. For reliable comparison:
-    1.  Upload the *original* file (`.docx`) to Gemini Docs.
-    2.  **Download** it back from Gemini Docs in `.docx` format. This downloaded file will be your "base" version for comparison.
+*   **Content Filters (Google Gemini):** Gemini models have built-in safety filters. Sometimes they can be **overly aggressive**, blocking even harmless text fragments. If you encounter frequent blocks, try simplifying the prompt, using a less strict model (Flash), or switching to OpenRouter, where filtering policies may differ.
+*   **Google Docs Change Tracking (for DOCX):** If you want to compare the original `.docx` and the processed file using the 'Compare documents' feature in Gemini Docs, the standard method (uploading both) might not show changes correctly. For reliable comparison:
+    1.  Upload the *original* file (`.docx`) to Google Docs.
+    2.  **Download** it back from Google Docs in `.docx` format. This downloaded file will be your "base" version for comparison.
     3.  Upload the file processed by this program (`_rewritten.docx`).
     4.  Use the 'Tools' -> 'Compare documents' feature, selecting the file downloaded in step 2 as the base and the file uploaded in step 3 as the comparison document.
 
@@ -273,13 +273,13 @@ Heuristics are optional text transformations applied *before* sending to the LLM
 2.  Run the `.exe` file.
 3.  The program will start processing the found files one by one. You will see process logs in the console.
 4.  Processed files will be saved in the folder specified by `processing.output_dir` (default `output_books`), with the suffix `_rewritten` (e.g., `my_book_rewritten.fb2`).
-5.  **Cache:** During processing, a `book_temp` folder is created, containing subfolders for each book with processed chunks (`chunkXXXXX.txt`). If the process is interrupted, on the next run, the program will read these files and continue from where it left off. **Optional**: Open in track changes mode in Word/Gemini Docs and review the suggested edits.
+5.  **Cache:** During processing, a `book_temp` folder is created, containing subfolders for each book with processed chunks (`chunkXXXXX.txt`). If the process is interrupted, on the next run, the program will read these files and continue from where it left off. **Optional**: Open in track changes mode in Word/Google Docs and review the suggested edits.
 6.  **Reset Cache:** If you want to start processing a book anew (e.g., after changing the prompt or settings), delete the corresponding subfolder inside `book_temp` (e.g., `book_temp/my_book_name/`).
 
 ## 🔧 Troubleshooting
 
 *   **`RESOURCE_EXHAUSTED` (Error 429 in logs):** Too many concurrent requests to the API, or the daily free request limit is exhausted, or funds have run out on a paid plan. Decrease the `processing.workers_amount` in `config.yaml` or wait until the next day/top up your balance.
-*   **Blocking Messages from Gemini (Filter):** Gemini Gemini's safety filter was triggered. See the "Important Notes" section. Try changing the prompt, using a different model, or provider (OpenRouter).
+*   **Blocking Messages from Google (Filter):** Gemini's safety filter was triggered. See the "Important Notes" section. Try changing the prompt, using a different model, or provider (OpenRouter).
 *   **`ValidationFailedError`:** The LLM changed the number of `<` or `>` tags. Often happens if the `replace_tags_with_placeholder` heuristic is disabled for FB2/DOCX, or if the LLM added/deleted a placeholder symbol when the heuristic is enabled. Sometimes occurs transiently; the model usually succeeds on the second attempt. Ensure the heuristic is enabled for FB2/DOCX and the prompt contains clear instructions to preserve tags/placeholders.
 *   **Slow Processing:** Increase `processing.workers_amount` (carefully!) or `processing.chunk_size`. Use faster models (Flash instead of Pro).
 
