@@ -11,7 +11,7 @@ openrouter:
 
 processing:
   chunk_size: 8000
-  output_dir: "performance_tests/rewriter_gemini_2.5_flash_exp_no_commas"
+  output_dir: "output_books"
   provider: "gemini"
   workers_amount: 100
   number_of_passes: 1
