@@ -46,7 +46,7 @@ class HeuristicApplier:
         for placeholder in self.possible_placeholders:
             if placeholder not in prompt:
                 replaced_tags = re.findall(r"<(.+?)>", prompt)
-                return [re.sub(r"<.+?>", placeholder, prompt), {"replaced_tags": replaced_tags, "placeholder": placeholder}]
+                return [re.sub(r"<[^>]*>", placeholder, prompt), {"replaced_tags": replaced_tags, "placeholder": placeholder}]
         self.logger.warning(f"Couldn't apply the replace_tags_with_placeholder heuristic: no available placeholder found")
         return [prompt, {"replaced_tags": replaced_tags, "placeholder": ""}]
 
@@ -60,5 +60,3 @@ class HeuristicApplier:
         # So if there are any excess placeholders, validate_response would catch tag count mismatch
         prompt = prompt.replace(placeholder, "<>")
         return prompt
-
-
