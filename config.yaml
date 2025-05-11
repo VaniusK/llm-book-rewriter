@@ -3,7 +3,7 @@ gemini:
   # use models/gemini-2.5-pro-exp-03-25 for stronger(albeit slower) model
   # UPD: Now it redirects you to gemini-2.5-pro-exp-05-06 which got nerfed and now is barely better than 2.0-flash
   model: "models/gemini-2.0-flash"
-  thinking_budget: 0
+  thinking_budget: 24000
 
 openrouter:
   api_key: "YOUR_KEY"
@@ -11,7 +11,7 @@ openrouter:
 
 processing:
   chunk_size: 8000
-  output_dir: "output_books"
+  output_dir: "performance_tests/rewriter_gemini_2.5_flash_exp_no_commas"
   provider: "gemini"
   workers_amount: 100
   number_of_passes: 1
@@ -21,7 +21,7 @@ processing:
 prompt: |
   **Инструкции**
   1. Исправь все орфографические ошибки и опечатки.
-  2. Исправь пунктуационные и грамматические ошибки, особое внимание уделяя сложным случаям, ётифицируй текст.
+  2. Исправь пунктуационные и грамматические ошибки, особое внимание уделяя сложным случаям.
   3. Не меняй никакие имена/сленг/слова, в которых ты не уверен. Кроме случаев, когда это очевидная опечатка/неправильная автозамена, тогда исправляй.
   4. Не меняй оформление авторской речи
   5. Не меняй ничего другого, не меняй обороты, даже если тебе кажется, что они выглядят криво - это авторский стиль. Не меняй дефисы/тире на другие символы. НИКОГДА не заменяй точки на запятые или наоборот
