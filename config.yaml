@@ -7,7 +7,7 @@ gemini:
 
 openrouter:
   api_key: "YOUR_KEY"
-  model: "gemini-2.0-flash-exp:free"
+  model: "google/gemini-2.0-flash-exp:free"
 
 processing:
   chunk_size: 8000
