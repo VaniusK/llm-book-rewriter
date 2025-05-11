@@ -17,6 +17,10 @@
 * Общая установка и использование(требует доступ через ЕЭС, ...): https://vkvideo.ru/video-182995355_456239017
 * Настройка Openrouter(не требует): https://vkvideo.ru/video-182995355_456239019
 
+**Гугл диск**
+* Общая установка и использование(требует доступ через ЕЭС, ...): https://drive.google.com/file/d/1zsb3cH4vZY4tiW6qOyINpBmlIh8R542U/view?usp=sharing
+* Настройка Openrouter(не требует): https://drive.google.com/file/d/1st2QqKw-8Vmp3yzVHW3FdtH3zKOhIXo6/view?usp=sharing
+
 ## Краткая инструкция по установке и использованию
 1. Перейдите на https://github.com/VaniusK/llm-book-rewriter/releases и скачайте .exe-файл последней версии.
 2.  
