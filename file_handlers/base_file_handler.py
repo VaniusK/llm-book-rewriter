@@ -20,12 +20,15 @@ class BaseFileHandler(ABC):
 
     async def _get_cache_dir(self, book_name: str) -> Path:
         cache_dir = Path(os.path.join("book_temp", book_name))
-        await asyncio.to_thread(os.makedirs, cache_dir, exist_ok=True)
         return cache_dir
 
     async def _get_chunk_filepath(self, book_name: str, chunk_index: int) -> Path:
         book_dir = await self._get_cache_dir(book_name)
         return Path(os.path.join(book_dir, f"chunk{chunk_index:05d}.txt"))
+
+    async def create_cache_dir(self, book_name: str):
+        cache_dir = Path(os.path.join("book_temp", book_name))
+        await asyncio.to_thread(os.makedirs, cache_dir, exist_ok=True)
 
     async def save_processed_chunk_to_file(self, book_name: str, chunk_index: int, chunk_text: str):
         chunk_filepath = await self._get_chunk_filepath(book_name, chunk_index)

@@ -98,12 +98,14 @@ class BookProcessor:
         processed_chunk_text = chunk
 
         i2 = 0
+        retries_available = config["processing"]["number_of_retries"]
         async with self.semaphore:
             while i2 < config["processing"]["number_of_passes"]:
                 previous_processed_chunk = processed_chunk_text
                 error_occurred = False
-                self.logger.info(
-                    f"Processing chunk {i + 1}/{len(chunks)}, pass {i2 + 1}/{config['processing']['number_of_passes']}")
+                if i2 == 0:
+                    self.logger.info(
+                        f"Processing chunk {i + 1}/{len(chunks)}, pass {i2 + 1}/{config['processing']['number_of_passes']}")
                 try:
                     # TODO: Maybe include original text in the prompt? Requires testing
                     full_prompt = config['prompt']
@@ -111,17 +113,20 @@ class BookProcessor:
                     full_prompt = full_prompt.format(text_chunk=preprocessed_chunk)
                     processed_chunk_text = await self.llm.generate(full_prompt)
                     processed_chunk_text = self.heuristic_applier.apply_postprocessing(processed_chunk_text, heuristic_state)
+                    processed_chunk_text = self.format_response(chunk, processed_chunk_text)
+
                     if not self.validate_response(chunk, processed_chunk_text):
                         raise ValidationFailedError(f"Validation failed while processing chunk {i + 1}/{len(chunks)}")
-                    processed_chunk_text = self.format_response(chunk, processed_chunk_text)
                 except ValidationFailedError as e:
                     self.logger.error(str(e))
-                    self.logger.debug(full_prompt)
+                    self.logger.debug(chunk)
                     self.logger.debug(processed_chunk_text)
+
                     error_occurred = True
                 except genai.errors.APIError as e:
                     if e.status == "RESOURCE_EXHAUSTED":
                         self.logger.error(f"API limit exhausted while processing chunk {i + 1}/{len(chunks)}")
+                        retries_available += 1
                         await asyncio.sleep(5)
                     else:
                         self.logger.error(f"API error happened while processing chunk {i + 1}/{len(chunks)}: {e}")
@@ -133,8 +138,9 @@ class BookProcessor:
 
                 if error_occurred:
                     processed_chunk_text = previous_processed_chunk
-                    if config["processing"]["retry_if_failed"]:
+                    if retries_available > 0:
                         self.logger.warning("Couldn't process the chunk, retrying")
+                        retries_available -= 1
                         await asyncio.sleep(1)
                         continue
                     else:
@@ -149,6 +155,7 @@ class BookProcessor:
         """Process book by modifying each chunk with LLM."""
         self.logger.info(f"Processing: {filepath}")
         book_name = filepath[:filepath.rfind(".")]
+        await self.file_handler.create_cache_dir(book_name)
         output_filepath = os.path.join(config["processing"]["output_dir"], f"{self.result_filename}.{self.book_extension}")
 
         text = self.file_handler.extract_text(filepath)

@@ -13,9 +13,9 @@ processing:
   chunk_size: 8000
   output_dir: "output_books"
   provider: "gemini"
-  workers_amount: 100
+  workers_amount: 3
   number_of_passes: 1
-  retry_if_failed: True
+  number_of_retries: 5
   docx_merge_runs: True
 
 prompt: |
@@ -37,7 +37,7 @@ prompt: |
   это нормально: вам даётся не весь текст, а его фрагмент. Если количество тегов в вашем ответе не будет совпадать
   с оригиналом, ответ принят не будет.
   5. НИКОГДА не добавляйте/не удаляйте/не изменяйте <RUN/> и <TAG/> теги: они системные для формата DOCX.
-  6. НИКОГДА не добавляйте/не удаляйте/не изменяйте системные символы: @, #, $, % и другие
+  6. НИКОГДА не добавляйте/не удаляйте/не изменяйте/не передвигайте системные символы: @, #, $, % и другие. Они заменяют собой теги.
 heuristics:
   remove_commas: False
   replace_tags_with_placeholder: True

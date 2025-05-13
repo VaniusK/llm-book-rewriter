@@ -9,7 +9,7 @@ class HeuristicApplier:
         self.preprocessing_original_heuristics = [self.preprocessing_remove_commas]
         self.preprocessing_heuristics = [self.preprocessing_replace_tags_with_placeholder]
         self.postprocessing_heuristics = [self.postprocessing_replace_tags_with_placeholder]
-        self.possible_placeholders = ["@", "#", "$", "%", "^", "&", "*", "~", "`", "@@", "@#", "@$", "@%"]
+        self.possible_placeholders = ["<image/>", "@", "#", "$", "%", "^", "&", "*", "~", "`", "@@", "@#", "@$", "@%"]
 
     def apply_preprocessing(self, prompt: str, is_original: bool) -> List[Any]:
         """Apply preprocessing heuristics to the prompt based on the configuration."""
@@ -45,7 +45,7 @@ class HeuristicApplier:
         replaced_tags = []
         for placeholder in self.possible_placeholders:
             if placeholder not in prompt:
-                replaced_tags = re.findall(r"<(.+?)>", prompt)
+                replaced_tags = re.findall(r"<[^>]*>", prompt)
                 return [re.sub(r"<[^>]*>", placeholder, prompt), {"replaced_tags": replaced_tags, "placeholder": placeholder}]
         self.logger.warning(f"Couldn't apply the replace_tags_with_placeholder heuristic: no available placeholder found")
         return [prompt, {"replaced_tags": replaced_tags, "placeholder": ""}]
@@ -56,7 +56,7 @@ class HeuristicApplier:
         if not placeholder:
             return prompt
         for tag in postprocessing_info["replaced_tags"]:
-            prompt = prompt.replace(placeholder, f"<{tag}>", 1)
+            prompt = prompt.replace(placeholder, f"{tag}", 1)
         # So if there are any excess placeholders, validate_response would catch tag count mismatch
         prompt = prompt.replace(placeholder, "<>")
         return prompt
