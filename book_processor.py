@@ -13,6 +13,9 @@ from llm import LLM
 class ValidationFailedError(Exception):
     pass
 
+class ProcessingFailedError(Exception):
+    pass
+
 class BookProcessor:
     """
     A class for processing books by splitting them into chunks,
@@ -116,9 +119,9 @@ class BookProcessor:
                     processed_chunk_text = self.format_response(chunk, processed_chunk_text)
 
                     if not self.validate_response(chunk, processed_chunk_text):
-                        raise ValidationFailedError(f"Validation failed while processing chunk {i + 1}/{len(chunks)}")
+                        raise ValidationFailedError(f"Couldn't validate the chunk")
                 except ValidationFailedError as e:
-                    self.logger.error(str(e))
+                    self.logger.error(str(e), f"{i + 1}/{len(chunks)}")
                     self.logger.debug(chunk)
                     self.logger.debug(processed_chunk_text)
 
@@ -144,7 +147,8 @@ class BookProcessor:
                         await asyncio.sleep(1)
                         continue
                     else:
-                        self.logger.warning("Couldn't process the chunk, skipping")
+                        self.logger.error(f"Couldn't process the chunk {i + 1}/{len(chunks)}, skipping")
+                        raise ProcessingFailedError(f"Couldn't process the chunk")
                 i2 += 1
                 chunk = processed_chunk_text
             await self.file_handler.save_processed_chunk_to_file(book_name, i, processed_chunk_text)
