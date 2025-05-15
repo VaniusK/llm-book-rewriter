@@ -121,7 +121,7 @@ class BookProcessor:
                     if not self.validate_response(chunk, processed_chunk_text):
                         raise ValidationFailedError(f"Couldn't validate the chunk")
                 except ValidationFailedError as e:
-                    self.logger.error(str(e), f"{i + 1}/{len(chunks)}")
+                    self.logger.error(str(e) + f" {i + 1}/{len(chunks)}")
                     self.logger.debug(chunk)
                     self.logger.debug(processed_chunk_text)
 
