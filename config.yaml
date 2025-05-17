@@ -39,3 +39,4 @@ prompt: |
 heuristics:
   remove_commas: False
   replace_tags_with_placeholder: True
+  placeholder: "<image/>"

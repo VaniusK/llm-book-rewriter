@@ -9,7 +9,7 @@ class HeuristicApplier:
         self.preprocessing_original_heuristics = [self.preprocessing_remove_commas]
         self.preprocessing_heuristics = [self.preprocessing_replace_tags_with_placeholder]
         self.postprocessing_heuristics = [self.postprocessing_replace_tags_with_placeholder]
-        self.possible_placeholders = ["<image/>", "@", "#", "$", "%", "^", "&", "*", "~", "`", "@@", "@#", "@$", "@%"]
+        self.placeholder = config["heuristics"]["placeholder"]
 
     def apply_preprocessing(self, prompt: str, is_original: bool) -> List[Any]:
         """Apply preprocessing heuristics to the prompt based on the configuration."""
@@ -42,13 +42,9 @@ class HeuristicApplier:
 
     def preprocessing_replace_tags_with_placeholder(self, prompt: str):
         """Replace XML tags with a placeholder."""
-        replaced_tags = []
-        for placeholder in self.possible_placeholders:
-            if placeholder not in prompt:
-                replaced_tags = re.findall(r"<[^>]*>", prompt)
-                return [re.sub(r"<[^>]*>", placeholder, prompt), {"replaced_tags": replaced_tags, "placeholder": placeholder}]
-        self.logger.warning(f"Couldn't apply the replace_tags_with_placeholder heuristic: no available placeholder found")
-        return [prompt, {"replaced_tags": replaced_tags, "placeholder": ""}]
+        replaced_tags = re.findall(r"<[^>]*>", prompt)
+        return [re.sub(r"<[^>]*>", " " + self.placeholder + " ", prompt),
+                {"replaced_tags": replaced_tags, "placeholder": self.placeholder}]
 
     def postprocessing_replace_tags_with_placeholder(self, prompt: str, postprocessing_info: Dict) -> str:
         """Replace placeholders with XML tags."""
