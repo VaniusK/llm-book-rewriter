@@ -68,12 +68,8 @@ class BookProcessor:
 
         result_parts = []
         for i, original_part in enumerate(original_parts):
-            if i >= len(processed_parts):
-                 continue
-
             processed_part = processed_parts[i]
-
-            if (re.fullmatch(tag_pattern, original_part)) or not original_part:
+            if re.fullmatch(tag_pattern, original_part):
                 result_parts.append(processed_part)
             else:
                 leading_whitespace_match = re.match(r'^(\s*)', original_part)
