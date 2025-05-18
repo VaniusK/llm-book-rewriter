@@ -54,7 +54,7 @@
 
 ## 📦 Поддерживаемые форматы
 
-*   **FB2:** Извлекает содержимое тега `<body>`, обрабатывает его и заменяет исходное тело обработанным текстом. (Использует библиотеку `lxml` для разбора XML).
+*   **FB2:** Извлекает содержимое тега `<body>`, обрабатывает его и заменяет исходное тело обработанным текстом.
 *   **TXT:** Читает весь файл как простой текст, обрабатывает и записывает результат в новый файл.
 *   **DOCX:** Обрабатывает текст по частям (`run`), вставляя временные теги `<RUN/>` для отслеживания. После обработки LLM заменяет текст в соответствующих `run`. (Использует библиотеку `python-docx`).
 
@@ -194,7 +194,7 @@ This program is designed to assist authors, editors, or readers in batch process
 
 ## 📦 Supported Formats
 
-*   **FB2:** Extracts the content of the `<body>` tag, processes it, and replaces the original body with the processed text. (Uses the `lxml` library for XML parsing).
+*   **FB2:** Extracts the content of the `<body>` tag, processes it, and replaces the original body with the processed text.
 *   **TXT:** Reads the entire file as plain text, processes it, and writes the result to a new file.
 *   **DOCX:** Processes text in parts (`run`), inserting temporary `<RUN/>` tags for tracking. After LLM processing, it replaces the text in the corresponding `run`s. (Uses the `python-docx` library).
 

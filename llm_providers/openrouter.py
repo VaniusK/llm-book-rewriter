@@ -2,6 +2,7 @@ from llm_providers.base_llm import BaseLLM
 from openai import AsyncOpenAI
 
 class OpenaiError(Exception):
+    """Raised when LLM generation fails (e.g., quota exceeded)."""
     pass
 
 

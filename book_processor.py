@@ -11,9 +11,11 @@ from llm import LLM
 
 
 class ValidationFailedError(Exception):
+    """Raised when LLM response validation fails (e.g., tag mismatch)."""
     pass
 
 class ProcessingFailedError(Exception):
+    """Raised when the code fails to process chunk in configured number of tries."""
     pass
 
 class BookProcessor:
