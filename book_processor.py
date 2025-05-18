@@ -20,7 +20,7 @@ class BookProcessor:
     A class for processing books by splitting them into chunks,
     processing each chunk with an LLM, and reassembling the processed chunks.
     """
-    def __init__(self, llm_provider: str, file_type: str, result_filename: str, config: Dict[Any, Any]):
+    def __init__(self, file_type: str, result_filename: str, config: Dict[Any, Any]):
         self.config = config
         self.llm = LLM(self.config).llm
         os.makedirs(config["processing"]["output_dir"], exist_ok=True)

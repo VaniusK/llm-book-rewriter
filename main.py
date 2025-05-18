@@ -22,10 +22,7 @@ if __name__ == "__main__":
     for filename in os.listdir("."):
         if filename in sys_files:
             continue
-        if filename != "test.fb2":
-            continue
         extension = filename[filename.rfind(".") + 1:]
         if extension in supported_extensions:
-            book_processor = BookProcessor(config["processing"]["provider"], extension,
-                                           f"{filename[:filename.rfind('.')]}_rewritten", config)
+            book_processor = BookProcessor(extension, f"{filename[:filename.rfind('.')]}_rewritten", config)
             asyncio.get_event_loop().run_until_complete(book_processor.process_book(filename))
