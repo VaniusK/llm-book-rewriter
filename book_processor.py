@@ -96,6 +96,7 @@ class BookProcessor:
             ">") == processed_chunk.count(">")
 
     async def process_chunk(self, chunk: str, i: int, chunks: List[str], book_name: str) -> str:
+        """Process single chunk."""
         processed_chunk_text = chunk
 
         i2 = 0

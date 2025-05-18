@@ -9,7 +9,7 @@ class TXTFileHandler(BaseFileHandler):
             output_file.write("".join(processed_chunks))
 
     def extract_text(self, filepath: str) -> str:
-        """Extract the text content from a txt file."""
+        """Extract the content from a txt file."""
         try:
             with open(filepath, 'r', encoding='utf-8') as file:
                 return file.read()

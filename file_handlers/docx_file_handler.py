@@ -18,8 +18,7 @@ class DOCXFileHandler(BaseFileHandler):
     def _get_run_formatting_signature(self, run: Run) -> Tuple[Any, ...]:
         """
         Creates a "fingerprint" of the run's formatting for comparison.
-        It is important to handle None (when the property is not explicitly set).
-        If merging isn't enabled, returns random value.
+        If merging isn't enabled, returns random value(so no merging).
         """
         if not self.config["processing"]["docx_merge_runs"]:
             return (
@@ -47,6 +46,7 @@ class DOCXFileHandler(BaseFileHandler):
                 current_signature = None
                 for run in para.runs:
                     if not current_signature or current_signature != self._get_run_formatting_signature(run):
+                        # Starting new run
                         current_signature = self._get_run_formatting_signature(run)
                         run_index += 1
                         tag = self._generate_tag(run_index)
@@ -77,6 +77,7 @@ class DOCXFileHandler(BaseFileHandler):
                 current_signature = None
                 for run in para.runs:
                     if not current_signature or current_signature != self._get_run_formatting_signature(run):
+                        # Starting new run
                         current_signature = self._get_run_formatting_signature(run)
                         run_index += 1
                         tag = self._generate_tag(run_index)
@@ -109,6 +110,8 @@ class DOCXFileHandler(BaseFileHandler):
             if missed_tags:
                 logging.warning(f"{len(missed_tags)} original tags were not found in the LLM response. Their corresponding run texts were not updated.")
                 logging.warning(f"Missing tags: {missed_tags}")
+
+            # Clearing leftover runs whose text has been transferred to another run.
             for tag in leftover_runs_map:
                 for run in leftover_runs_map[tag]:
                     run.text = ""

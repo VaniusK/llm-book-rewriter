@@ -14,7 +14,7 @@ class FB2FileHandler(BaseFileHandler):
                 output_file.write(input_file_text)
 
     def extract_text(self, filepath: str) -> str:
-        """Extract fb2's <body> content using regex."""
+        """Extract fb2's <body> content."""
         with open(filepath, 'r', encoding="utf-8") as f:
             content = f.read()
             pattern = r"<body.*?>.*?</body>"
