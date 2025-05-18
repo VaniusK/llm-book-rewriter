@@ -1,10 +1,17 @@
 from google import genai
 from google.genai import types as genai_types
 from llm_providers.base_llm import BaseLLM
-from typing import Dict, Any
+
 
 class Gemini(BaseLLM):
-    def __init__(self, model_name: str, api_key: str, config: Dict[Any, Any]):
+    """A class for Gemini(Google) LLM provider."""
+
+    def __init__(self, model_name: str, api_key: str, config: dict[any, any]):
+        """
+        Initializes the LLM with the given model name and API key.
+        Disables safety filters to avoid responses being blocked.
+        2.5-flash and potentially newer models require thinking_config
+        """
         self.client = genai.Client(api_key=api_key)
         self.model = model_name
         self.safety_settings = [
@@ -37,6 +44,7 @@ class Gemini(BaseLLM):
             self.model_config.thinking_config=genai_types.ThinkingConfig(thinking_budget=self.config["gemini"]["thinking_budget"])
 
     async def generate(self, prompt: str) -> str:
+        """Generate text based on the given prompt."""
         response = await self.client.aio.models.generate_content(
             model=self.model,
             contents=[prompt],

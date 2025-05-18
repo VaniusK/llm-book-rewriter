@@ -1,13 +1,14 @@
 import docx
 import re
 import logging
-from typing import Dict, List, Tuple, Any
 import random
 from docx.text.run import Run
 from file_handlers.base_file_handler import BaseFileHandler
 
 
 class DOCXFileHandler(BaseFileHandler):
+    """Class for handling DOCX files."""
+
     TAG_PREFIX = "<RUN"
     TAG_SUFFIX = "/>"
 
@@ -15,7 +16,7 @@ class DOCXFileHandler(BaseFileHandler):
         """Generate a unique tag for a text fragment."""
         return f"{self.TAG_PREFIX}{index}{self.TAG_SUFFIX}"
 
-    def _get_run_formatting_signature(self, run: Run) -> Tuple[Any, ...]:
+    def _get_run_formatting_signature(self, run: Run) -> tuple[any, ...]:
         """
         Creates a "fingerprint" of the run's formatting for comparison.
         If merging isn't enabled, returns random value(so no merging).
@@ -36,7 +37,7 @@ class DOCXFileHandler(BaseFileHandler):
         )
 
     def extract_text(self, filepath: str) -> str:
-        """Extract text from DOCX, inserting tags before each text fragment, and returns a string for LLM"""
+        """Extract text from DOCX, inserting tags before each text fragment, and returns a string"""
         try:
             document = docx.Document(filepath)
             text_for_llm_parts = []
@@ -61,16 +62,13 @@ class DOCXFileHandler(BaseFileHandler):
             logging.error(f"Error extracting text/mapping from {filepath}: {e}")
             return ""
 
-    def insert_text(self,
-                                original_filepath: str,
-                                processed_chunks: List[str],
-                                output_filepath: str):
+    def insert_text(self, original_filepath: str, processed_chunks: list[str], output_filepath: str):
         """Update the text of fragments in the document based on the processed string with tags."""
         try:
             processed_text_with_tags = "".join(processed_chunks)
             document = docx.Document(original_filepath)
-            new_run_map: Dict[str, Run] = {}
-            leftover_runs_map: Dict[str, List[Run]] = {}
+            new_run_map: dict[str, Run] = {}
+            leftover_runs_map: dict[str, list[Run]] = {}
             run_index = 0
 
             for para in document.paragraphs:

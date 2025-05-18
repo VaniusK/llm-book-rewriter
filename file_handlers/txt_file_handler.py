@@ -1,9 +1,11 @@
-from typing import List
 import logging
 from file_handlers.base_file_handler import BaseFileHandler
 
+
 class TXTFileHandler(BaseFileHandler):
-    def insert_text(self, original_filepath: str, processed_chunks: List[str], output_filepath: str) -> None:
+    """Class for handling TXT files."""
+
+    def insert_text(self, original_filepath: str, processed_chunks: list[str], output_filepath: str) -> None:
         """Replace the content of a txt file with the processed chunks."""
         with open(output_filepath, 'w', encoding='utf-8') as output_file:
             output_file.write("".join(processed_chunks))

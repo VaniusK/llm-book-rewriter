@@ -1,5 +1,4 @@
 import importlib
-from typing import Dict, Any
 
 class LLM:
     """
@@ -7,15 +6,14 @@ class LLM:
 
     This class dynamically imports and instantiates LLM classes from the llm_providers package.
     """
-    def __init__(self, config: Dict[Any, Any]):
+    def __init__(self, config: dict[any, any]):
+        """Initialize the LLM based on config."""
         self.provider = config["processing"]["provider"]
         self.config = config
         self.llm = self.get_llm()
 
     def get_llm(self) -> object:
-        """
-        Returns llm class based on provider name.
-        """
+        """Return llm class based on provider name."""
         module_name = "llm_providers." + self.provider
         class_name = self.provider.capitalize()
 

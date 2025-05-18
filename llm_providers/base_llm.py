@@ -1,9 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Any
+
 
 class BaseLLM(ABC):
+    """Abstract interface for llm providers."""
+
     @abstractmethod
-    def __init__(self, model_name: str, api_key: str, config: Dict[Any, Any]):
+    def __init__(self, model_name: str, api_key: str, config: dict[any, any]):
         """Initialize the LLM with the given model name and API key."""
         pass
 
