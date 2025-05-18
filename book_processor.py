@@ -4,7 +4,6 @@ import time
 import logging
 import asyncio
 from tqdm.asyncio import tqdm
-from typing import List, Dict, Any
 from file_handler import FileHandler
 from heuristic_applier import HeuristicApplier
 from google import genai
@@ -22,7 +21,16 @@ class BookProcessor:
     A class for processing books by splitting them into chunks,
     processing each chunk with an LLM, and reassembling the processed chunks.
     """
-    def __init__(self, file_type: str, result_filename: str, config: Dict[Any, Any]):
+    def __init__(self, file_type: str, result_filename: str, config: dict[any, any]):
+        """
+            Initializes the BookProcessor.
+
+            Args:
+                file_type: The extension of the book file (e.g., 'fb2', 'txt').
+                result_filename: The base name for the output file (without extension).
+                config: Configuration dictionary containing settings for
+                                         processing, LLM, file handling, etc.
+            """
         self.config = config
         self.llm = LLM(self.config).llm
         os.makedirs(config["processing"]["output_dir"], exist_ok=True)
@@ -34,8 +42,18 @@ class BookProcessor:
         self.result_filename = result_filename
 
     def split_into_chunks(self, text: str, chunk_size: int) -> list[str]:
-        """Split text into chunks of(roughly) given size, considering tag/sentence endings."""
-        ending_symbols = [".", "!", "?"]
+        """
+        Split text into chunks of(roughly) given size, considering tag/sentence endings.
+        Avoids creating overly small final chunks.
+
+        Args:
+            text: The input text to split.
+            chunk_size: The desired approximate size for each chunk.
+
+        Returns:
+            A list of text chunks.
+        """
+        ending_symbols = [".", "!", "?", "\n"]
         if ">" in text:
             ending_symbols = [">"]
         chunks = []
@@ -60,8 +78,21 @@ class BookProcessor:
         return chunks
 
     def format_response(self, original_chunk: str, processed_chunk: str) -> str:
-        """Ensure correct special symbol usage on chunk edges and between xml tags."""
-        tag_pattern = r"(<[^>]+>)"
+        """
+        Formats the processed chunk to preserve original whitespace and tag structure.
+
+        It ensures that leading/trailing whitespace around non-tag content in the
+        original chunk is maintained in the processed chunk, and that tags
+        themselves are preserved.
+
+        Args:
+            original_chunk: The original text chunk before LLM processing.
+            processed_chunk: The text chunk after LLM processing.
+
+        Returns:
+            The formatted processed chunk.
+        """
+        tag_pattern = r"(<.*?>)"
         original_parts = re.split(tag_pattern, original_chunk)
         processed_parts = re.split(tag_pattern, processed_chunk)
 
@@ -72,7 +103,7 @@ class BookProcessor:
         for i, original_part in enumerate(original_parts):
             processed_part = processed_parts[i]
             if re.fullmatch(tag_pattern, original_part):
-                result_parts.append(processed_part)
+                result_parts.append(original_part)
             else:
                 leading_whitespace_match = re.match(r'^(\s*)', original_part)
                 leading_whitespace = leading_whitespace_match.group(1) if leading_whitespace_match else ""
@@ -95,8 +126,33 @@ class BookProcessor:
         return original_chunk.count("<") == processed_chunk.count("<") and original_chunk.count(
             ">") == processed_chunk.count(">")
 
-    async def process_chunk(self, chunk: str, i: int, chunks: List[str], book_name: str) -> str:
-        """Process single chunk."""
+    async def process_chunk(self, chunk: str, i: int, total_chunks: int, book_name: str) -> str:
+        """
+        Processes a single text chunk using the LLM with multiple passes and retries.
+
+        The processing involves:
+        1. Applying pre-processing heuristics.
+        2. Sending the chunk to the LLM (multiple passes if configured).
+        3. Applying post-processing heuristics.
+        4. Formatting the response to preserve original structure.
+        5. Validating the processed chunk (e.g., tag count).
+        Handles API errors and validation failures with retries.
+        Uses a semaphore to limit concurrent LLM calls. Saves the processed
+        chunk to a cache file.
+
+        Args:
+            chunk: The text chunk to process.
+            i: The index of the current chunk in the list of all chunks.
+            total_chunks: Total amount of chunks in the book, used for logging.
+            book_name: The name of the book, used for caching.
+
+        Returns:
+            The processed text chunk.
+
+        Raises:
+            ProcessingFailedError: If the chunk cannot be processed successfully
+                                   after all retries.
+        """
         processed_chunk_text = chunk
 
         i2 = 0
@@ -107,7 +163,7 @@ class BookProcessor:
                 error_occurred = False
                 if i2 == 0:
                     self.logger.info(
-                        f"Processing chunk {i + 1}/{len(chunks)}, pass {i2 + 1}/{self.config['processing']['number_of_passes']}")
+                        f"Processing chunk {i + 1}/{total_chunks}, pass {i2 + 1}/{self.config['processing']['number_of_passes']}")
                 try:
                     # TODO: Maybe include original text in the prompt? Requires testing
                     full_prompt = self.config['prompt']
@@ -120,22 +176,22 @@ class BookProcessor:
                     if not self.validate_response(chunk, processed_chunk_text):
                         raise ValidationFailedError(f"Couldn't validate the chunk")
                 except ValidationFailedError as e:
-                    self.logger.error(str(e) + f" {i + 1}/{len(chunks)}")
+                    self.logger.error(str(e) + f" {i + 1}/{total_chunks}")
                     self.logger.debug(chunk)
                     self.logger.debug(processed_chunk_text)
 
                     error_occurred = True
                 except genai.errors.APIError as e:
                     if e.status == "RESOURCE_EXHAUSTED":
-                        self.logger.error(f"API limit exhausted while processing chunk {i + 1}/{len(chunks)}")
+                        self.logger.error(f"API limit exhausted while processing chunk {i + 1}/{total_chunks}")
                         retries_available += 1
                         await asyncio.sleep(5)
                     else:
-                        self.logger.error(f"API error happened while processing chunk {i + 1}/{len(chunks)}: {e}")
+                        self.logger.error(f"API error happened while processing chunk {i + 1}/{total_chunks}: {e}")
                     error_occurred = True
                 except Exception as e:
                     # TODO: Change to specific exceptions: filter, api limit, etc
-                    self.logger.error(f"Exception happened while processing chunk {i + 1}/{len(chunks)}: {e}")
+                    self.logger.error(f"Exception happened while processing chunk {i + 1}/{total_chunks}: {e}")
                     error_occurred = True
 
                 if error_occurred:
@@ -146,16 +202,30 @@ class BookProcessor:
                         await asyncio.sleep(1)
                         continue
                     else:
-                        self.logger.error(f"Couldn't process the chunk {i + 1}/{len(chunks)}, skipping")
+                        self.logger.error(f"Couldn't process the chunk {i + 1}/{total_chunks}, skipping")
                         raise ProcessingFailedError(f"Couldn't process the chunk")
                 i2 += 1
                 chunk = processed_chunk_text
             await self.file_handler.save_processed_chunk_to_file(book_name, i, processed_chunk_text)
-            self.logger.info(f"Successfully processed and saved chunk {i + 1}/{len(chunks)}")
+            self.logger.info(f"Successfully processed and saved chunk {i + 1}/{total_chunks}")
             return processed_chunk_text
 
     async def process_book(self, filepath: str):
-        """Process book by modifying each chunk with LLM."""
+        """
+        Processes an entire book file.
+
+        The process includes:
+        1. Extracting text from the file.
+        2. Splitting the text into manageable chunks.
+        3. Checking a cache for already processed chunks.
+        4. Asynchronously processing any new or unprocessed chunks using `process_chunk`.
+        5. Reassembling the processed chunks into the final text.
+        6. Saving the final text to a new file.
+        7. Clearing the chunk cache for the book.
+
+        Args:
+            filepath: The path to the book file to be processed.
+    """
         self.logger.info(f"Processing: {filepath}")
         book_name = filepath[:filepath.rfind(".")]
         await self.file_handler.create_cache_dir(book_name)
@@ -178,7 +248,7 @@ class BookProcessor:
 
         for i, chunk_index in enumerate(indices_to_process):
             chunk = chunks_to_process[i]
-            task = asyncio.create_task(self.process_chunk(chunk, chunk_index, chunks, book_name), name=f"Chunk-{chunk_index + 1}")
+            task = asyncio.create_task(self.process_chunk(chunk, chunk_index, len(chunks), book_name), name=f"Chunk-{chunk_index + 1}")
             tasks.append(task)
 
         self.logger.info(f"Starting processing for {len(tasks)} chunks using up to {self.semaphore._value} concurrent workers.")

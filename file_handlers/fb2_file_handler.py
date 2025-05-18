@@ -1,9 +1,8 @@
-from typing import List
 import re
 from file_handlers.base_file_handler import BaseFileHandler
 
 class FB2FileHandler(BaseFileHandler):
-    def insert_text(self, original_filepath: str, processed_chunks: List[str], output_filepath: str):
+    def insert_text(self, original_filepath: str, processed_chunks: list[str], output_filepath: str):
         """Replace fb2's <body> with given text."""
         with open(original_filepath, 'r', encoding="utf-8") as input_file:
             with open(output_filepath, 'w', encoding="utf-8") as output_file:
