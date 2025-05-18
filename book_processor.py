@@ -3,11 +3,13 @@ import re
 import time
 import logging
 import asyncio
+from tqdm.asyncio import tqdm
 from typing import List, Dict, Any
 from file_handler import FileHandler
 from heuristic_applier import HeuristicApplier
 from google import genai
 from llm import LLM
+
 
 class ValidationFailedError(Exception):
     pass
@@ -181,7 +183,7 @@ class BookProcessor:
         self.logger.info(f"Starting processing for {len(tasks)} chunks using up to {self.semaphore._value} concurrent workers.")
 
         start_time_processing = time.time()
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+        results = await tqdm.gather(*tasks, desc=f"Processing {filepath}", total=len(chunks), initial=len(chunks) - len(indices_to_process), bar_format="{l_bar}{bar}{r_bar}\n")
         end_time_processing = time.time()
         self.logger.info(f"Finished processing {len(tasks)} chunks in {end_time_processing - start_time_processing:.2f} seconds.")
 
