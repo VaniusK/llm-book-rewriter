@@ -1,5 +1,5 @@
 import importlib
-from config import config
+from typing import Dict, Any
 
 class LLM:
     """
@@ -7,8 +7,9 @@ class LLM:
 
     This class dynamically imports and instantiates LLM classes from the llm_providers package.
     """
-    def __init__(self, provider : str):
-        self.provider = provider
+    def __init__(self, config: Dict[Any, Any]):
+        self.provider = config["processing"]["provider"]
+        self.config = config
         self.llm = self.get_llm()
 
     def get_llm(self) -> object:
@@ -21,7 +22,7 @@ class LLM:
         try:
             module = importlib.import_module(module_name)
             llm_class = getattr(module, class_name)
-            llm_instance = llm_class(config[self.provider]['model'], config[self.provider]['api_key'])
+            llm_instance = llm_class(self.config[self.provider]['model'], self.config[self.provider]['api_key'], self.config)
             return llm_instance
         except ImportError:
             raise ImportError(f"Could not import module {module_name}")

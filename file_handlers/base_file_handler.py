@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import os, shutil
 from pathlib import Path
 import asyncio
 
 class BaseFileHandler(ABC):
-    def __init__(self):
-        pass
+    def __init__(self, config: Dict[Any, Any]):
+        self.config = config
 
     @abstractmethod
     def insert_text(self, original_filepath: str, processed_chunks: List[str], output_filepath: str):

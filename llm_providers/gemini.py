@@ -1,10 +1,10 @@
 from google import genai
 from google.genai import types as genai_types
 from llm_providers.base_llm import BaseLLM
-from config import config
+from typing import Dict, Any
 
 class Gemini(BaseLLM):
-    def __init__(self, model_name: str, api_key: str):
+    def __init__(self, model_name: str, api_key: str, config: Dict[Any, Any]):
         self.client = genai.Client(api_key=api_key)
         self.model = model_name
         self.safety_settings = [
@@ -32,8 +32,9 @@ class Gemini(BaseLLM):
             top_p=0.95,
             top_k=64,
         )
+        self.config = config
         if "2.5-flash" in model_name:
-            self.model_config.thinking_config=genai_types.ThinkingConfig(thinking_budget=config["gemini"]["thinking_budget"])
+            self.model_config.thinking_config=genai_types.ThinkingConfig(thinking_budget=self.config["gemini"]["thinking_budget"])
 
     async def generate(self, prompt: str) -> str:
         response = await self.client.aio.models.generate_content(

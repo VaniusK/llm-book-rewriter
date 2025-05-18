@@ -5,7 +5,6 @@ from typing import Dict, List, Tuple, Any
 import random
 from docx.text.run import Run
 from file_handlers.base_file_handler import BaseFileHandler
-from config import config
 
 
 class DOCXFileHandler(BaseFileHandler):
@@ -22,7 +21,7 @@ class DOCXFileHandler(BaseFileHandler):
         It is important to handle None (when the property is not explicitly set).
         If merging isn't enabled, returns random value.
         """
-        if not config["processing"]["docx_merge_runs"]:
+        if not self.config["processing"]["docx_merge_runs"]:
             return (
                 random.randint(1, 1000000000),
                 random.randint(1, 1000000000)

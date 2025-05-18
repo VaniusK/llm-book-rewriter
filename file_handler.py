@@ -1,4 +1,5 @@
 import importlib
+from typing import Dict, Any
 
 class FileHandler:
     """
@@ -8,8 +9,9 @@ class FileHandler:
     from the file_handlers package.
     The file handler class is determined by the file_type.
     """
-    def __init__(self, file_type : str):
+    def __init__(self, file_type : str, config: Dict[Any, Any]):
         self.file_type = file_type
+        self.config = config
         self.file_handler = self.get_file_handler()
 
     def get_file_handler(self) -> object:
@@ -20,7 +22,7 @@ class FileHandler:
         try:
             module = importlib.import_module(module_name)
             file_handler_class = getattr(module, class_name)
-            file_handler_instance = file_handler_class()
+            file_handler_instance = file_handler_class(self.config)
             return file_handler_instance
         except ImportError:
             raise ImportError(f"Could not import module {module_name}")

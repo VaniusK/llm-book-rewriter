@@ -1,5 +1,3 @@
-from google.genai.errors import APIError
-
 from llm_providers.base_llm import BaseLLM
 from openai import AsyncOpenAI
 

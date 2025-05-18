@@ -1,28 +1,28 @@
 from typing import List, Any, Dict
 import re
 import logging
-from config import config
 
 class HeuristicApplier:
-    def __init__(self):
+    def __init__(self, config: Dict[Any, Any]):
         self.logger = logging.getLogger(__name__)
         self.preprocessing_original_heuristics = [self.preprocessing_remove_commas]
         self.preprocessing_heuristics = [self.preprocessing_replace_tags_with_placeholder]
         self.postprocessing_heuristics = [self.postprocessing_replace_tags_with_placeholder]
         self.placeholder = config["heuristics"]["placeholder"]
+        self.config = config
 
     def apply_preprocessing(self, prompt: str, is_original: bool) -> List[Any]:
         """Apply preprocessing heuristics to the prompt based on the configuration."""
         postprocessing_info = dict()
         if is_original:
             for heuristic in self.preprocessing_original_heuristics:
-                if config['heuristics'][heuristic.__name__[(heuristic.__name__).find("_") + 1:]]:
+                if self.config ['heuristics'][heuristic.__name__[(heuristic.__name__).find("_") + 1:]]:
                     result = heuristic(prompt)
                     prompt = result[0]
                     for var in result[1]:
                         postprocessing_info[var] = result[1][var]
         for heuristic in self.preprocessing_heuristics:
-            if config['heuristics'][heuristic.__name__[(heuristic.__name__).find("_") + 1:]]:
+            if self.config ['heuristics'][heuristic.__name__[(heuristic.__name__).find("_") + 1:]]:
                 result = heuristic(prompt)
                 prompt = result[0]
                 for var in result[1]:
@@ -32,7 +32,7 @@ class HeuristicApplier:
     def apply_postprocessing(self, prompt: str, postprocessing_info: Dict) -> str:
         """Apply postprocessing heuristics to the prompt based on the configuration."""
         for heuristic in self.postprocessing_heuristics:
-            if config['heuristics'][heuristic.__name__[(heuristic.__name__).find("_") + 1:]]:
+            if self.config ['heuristics'][heuristic.__name__[(heuristic.__name__).find("_") + 1:]]:
                 prompt = heuristic(prompt, postprocessing_info)
         return prompt
 

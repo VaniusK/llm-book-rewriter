@@ -3,8 +3,7 @@ import re
 import time
 import logging
 import asyncio
-from typing import List
-from config import config
+from typing import List, Dict, Any
 from file_handler import FileHandler
 from heuristic_applier import HeuristicApplier
 from google import genai
@@ -21,14 +20,15 @@ class BookProcessor:
     A class for processing books by splitting them into chunks,
     processing each chunk with an LLM, and reassembling the processed chunks.
     """
-    def __init__(self, llm_provider: str, file_type: str, result_filename: str):
-        self.llm = LLM(llm_provider).llm
+    def __init__(self, llm_provider: str, file_type: str, result_filename: str, config: Dict[Any, Any]):
+        self.config = config
+        self.llm = LLM(self.config).llm
         os.makedirs(config["processing"]["output_dir"], exist_ok=True)
         self.logger = logging.getLogger(__name__)
-        self.file_handler = FileHandler(file_type).file_handler
-        self.heuristic_applier = HeuristicApplier()
+        self.file_handler = FileHandler(file_type, self.config).file_handler
+        self.heuristic_applier = HeuristicApplier(self.config)
         self.book_extension = file_type
-        self.semaphore = asyncio.Semaphore(config["processing"]["workers_amount"])
+        self.semaphore = asyncio.Semaphore(self.config["processing"]["workers_amount"])
         self.result_filename = result_filename
 
     def split_into_chunks(self, text: str, chunk_size: int) -> list[str]:
@@ -97,17 +97,17 @@ class BookProcessor:
         processed_chunk_text = chunk
 
         i2 = 0
-        retries_available = config["processing"]["number_of_retries"]
+        retries_available = self.config["processing"]["number_of_retries"] - 1
         async with self.semaphore:
-            while i2 < config["processing"]["number_of_passes"]:
+            while i2 < self.config["processing"]["number_of_passes"]:
                 previous_processed_chunk = processed_chunk_text
                 error_occurred = False
                 if i2 == 0:
                     self.logger.info(
-                        f"Processing chunk {i + 1}/{len(chunks)}, pass {i2 + 1}/{config['processing']['number_of_passes']}")
+                        f"Processing chunk {i + 1}/{len(chunks)}, pass {i2 + 1}/{self.config['processing']['number_of_passes']}")
                 try:
                     # TODO: Maybe include original text in the prompt? Requires testing
-                    full_prompt = config['prompt']
+                    full_prompt = self.config['prompt']
                     preprocessed_chunk, heuristic_state = self.heuristic_applier.apply_preprocessing(processed_chunk_text, i2 == 0)
                     full_prompt = full_prompt.format(text_chunk=preprocessed_chunk)
                     processed_chunk_text = await self.llm.generate(full_prompt)
@@ -156,10 +156,10 @@ class BookProcessor:
         self.logger.info(f"Processing: {filepath}")
         book_name = filepath[:filepath.rfind(".")]
         await self.file_handler.create_cache_dir(book_name)
-        output_filepath = os.path.join(config["processing"]["output_dir"], f"{self.result_filename}.{self.book_extension}")
+        output_filepath = os.path.join(self.config["processing"]["output_dir"], f"{self.result_filename}.{self.book_extension}")
 
         text = self.file_handler.extract_text(filepath)
-        chunks = self.split_into_chunks(text, config["processing"]["chunk_size"])
+        chunks = self.split_into_chunks(text, self.config["processing"]["chunk_size"])
 
         tasks = []
         chunks_to_process = []
