@@ -1,9 +1,9 @@
 import unittest
 from unittest.mock import patch
 from unittest.mock import AsyncMock
-import os
 from book_processor import BookProcessor
 import book_processor
+from pathlib import Path
 
 config = {
     "processing": {
@@ -27,11 +27,14 @@ class TestBookProcessor(unittest.IsolatedAsyncioTestCase):
     A class for testing BookProcessor behaviour.
     """
 
+    output_file = Path("result.fb2")
+    test_file = Path("test.fb2")
+
     @patch("book_processor.FileHandler")
     @patch("book_processor.LLM")
     def test_split_into_chunks(self, MockLLM, MockFileHandler):
         """Test split_into_chunks method."""
-        processor = BookProcessor("fb2", "result.fb2", config)
+        processor = BookProcessor(config, "fb2")
         self.assertEqual(processor.split_into_chunks("0123456789>", 10), ["0123456789>"])
         self.assertEqual(processor.split_into_chunks("0123456789", 10), ["0123456789"])
         self.assertEqual(processor.split_into_chunks("0123456789>0123456789>", 10), ["0123456789>", "0123456789>"])
@@ -42,7 +45,7 @@ class TestBookProcessor(unittest.IsolatedAsyncioTestCase):
     @patch("book_processor.LLM")
     def test_validate_response(self, MockLLM, MockFileHandler):
         """Test validate_response method."""
-        processor = BookProcessor("fb2", "result.fb2", config)
+        processor = BookProcessor(config, "fb2")
         self.assertEqual(processor.validate_response("<p>Hi<p/>", "<p>Hi<p/>"), True)
         self.assertEqual(processor.validate_response("<p>Hi<p/>", "<p>Hi<p/"), False)
         self.assertEqual(processor.validate_response("<p>Hi<p/>", "<p>Hi"), False)
@@ -51,7 +54,7 @@ class TestBookProcessor(unittest.IsolatedAsyncioTestCase):
     @patch("book_processor.LLM")
     def test_format_response(self, MockLLM, MockFileHandler):
         """Test format_response method."""
-        processor = BookProcessor("fb2", "result.fb2", config)
+        processor = BookProcessor(config, "fb2")
         self.assertEqual(processor.format_response("<p> Let's go for a dog\t   <p/>", "<p>Let's go for a walk<p/>"),
                          "<p> Let's go for a walk\t   <p/>")
         self.assertEqual(processor.format_response("\n\nSome text\n\n", "\t New text \t"), "\n\nNew text\n\n")
@@ -72,7 +75,7 @@ class TestBookProcessor(unittest.IsolatedAsyncioTestCase):
         async def return_random_text(text: str) -> str:
             return "m,nbhgvyyuijkm,nbhgyuhjkm"
 
-        processor = BookProcessor("fb2", "result", config)
+        processor = BookProcessor(config, "fb2")
         mock_llm_instance = MockLLM.return_value.llm
         mock_file_handler_instance = MockFileHandler.return_value.file_handler
         processor.llm = mock_llm_instance
@@ -104,17 +107,17 @@ class TestBookProcessor(unittest.IsolatedAsyncioTestCase):
         async def return_same_text(text: str) -> str:
             return text
 
-        processor = BookProcessor("fb2", "result", config)
+        processor = BookProcessor(config, "fb2")
         mock_llm_instance = MockLLM.return_value.llm
         processor.llm = mock_llm_instance
         mock_llm_instance.generate = AsyncMock(side_effect=return_same_text)
-        await processor.process_book("test.fb2")
-        processed_file_path = os.path.join(config["processing"]["output_dir"], "result.fb2")
-        self.assertTrue(os.path.exists(processed_file_path))
-        original_text = processor.file_handler.extract_text("test.fb2")
+        await processor.process_book(self.test_file, self.output_file)
+        processed_file_path = Path(config["processing"]["output_dir"]) / self.output_file
+        self.assertTrue(processed_file_path.exists())
+        original_text = processor.file_handler.extract_text(self.test_file)
         processed_text = processor.file_handler.extract_text(processed_file_path)
         self.assertEqual(original_text, processed_text)
-        os.remove(processed_file_path)
+        processed_file_path.unlink()
 
 
 if __name__ == '__main__':

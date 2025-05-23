@@ -33,8 +33,8 @@ class TestBaseFileHandler(unittest.TestCase):
     def _run_extraction_insertion_test(self, config: Dict[Any, Any]):
         """Run test for extracting/inserting text."""
         file_handler = self.handler_class(config)
-        original_text = file_handler.extract_text(str(self.input_path))
-        file_handler.insert_text(str(self.input_path), [original_text], str(self.output_path))
+        original_text = file_handler.extract_text(self.input_path)
+        file_handler.insert_text(self.input_path, original_text, self.output_path)
         self.assertTrue(self.output_path.exists())
-        inserted_text = file_handler.extract_text(str(self.output_path))
+        inserted_text = file_handler.extract_text(self.output_path)
         self.assertEqual(original_text, inserted_text)

@@ -1,20 +1,19 @@
 import logging
 from file_handlers.base_file_handler import BaseFileHandler
+from pathlib import Path
 
 
 class TXTFileHandler(BaseFileHandler):
     """Class for handling TXT files."""
 
-    def insert_text(self, original_filepath: str, processed_chunks: list[str], output_filepath: str) -> None:
+    def insert_text(self, original_filepath: Path, processed_text: str, output_filepath: Path) -> None:
         """Replace the content of a txt file with the processed chunks."""
-        with open(output_filepath, 'w', encoding='utf-8') as output_file:
-            output_file.write("".join(processed_chunks))
+        output_filepath.write_text(processed_text, encoding='utf-8')
 
-    def extract_text(self, filepath: str) -> str:
+    def extract_text(self, filepath: Path) -> str:
         """Extract the content from a txt file."""
         try:
-            with open(filepath, 'r', encoding='utf-8') as file:
-                return file.read()
+            return filepath.read_text(encoding='utf-8')
         except FileNotFoundError:
             logging.error(f"File not found at {filepath}")
             return ""

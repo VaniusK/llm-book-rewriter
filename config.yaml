@@ -2,8 +2,8 @@ gemini:
   api_key: "YOUR_KEY"
   # use models/gemini-2.5-pro-exp-03-25 for stronger(albeit slower) model
   # UPD: Now it redirects you to gemini-2.5-pro-exp-05-06 which got nerfed and now is barely better than 2.0-flash
-  model: "models/gemini-2.0-flash"
-  thinking_budget: 24000
+  model: "models/gemini-2.5-flash-preview-04-17"
+  thinking_budget: 0
 
 openrouter:
   api_key: "YOUR_KEY"
@@ -37,6 +37,6 @@ prompt: |
   с оригиналом, ответ принят не будет. НИКОГДА не изменяйте пустые(самозакрывающиеся) теги.
   4. НИКОГДА не добавляйте/не удаляйте/не изменяйте теги <RUN/> и <custom-tag/>: они системные для формата DOCX.
 heuristics:
-  remove_commas: False
+  remove_commas: True
   replace_tags_with_placeholder: True
   placeholder: "<custom-tag/>"

@@ -1,7 +1,7 @@
 import docx
 import re
 import logging
-import random
+from pathlib import Path
 from docx.text.run import Run
 from file_handlers.base_file_handler import BaseFileHandler
 
@@ -19,13 +19,10 @@ class DOCXFileHandler(BaseFileHandler):
     def _get_run_formatting_signature(self, run: Run) -> tuple[any, ...]:
         """
         Creates a "fingerprint" of the run's formatting for comparison.
-        If merging isn't enabled, returns random value(so no merging).
+        If merging isn't enabled, uses the run's unique id(so no merging).
         """
         if not self.config["processing"]["docx_merge_runs"]:
-            return (
-                random.randint(1, 1000000000),
-                random.randint(1, 1000000000)
-            )
+            return tuple([id(run)])
         font = run.font
         return (
             run.bold,
@@ -36,11 +33,11 @@ class DOCXFileHandler(BaseFileHandler):
             font.color.rgb if font.color and font.color.rgb else None
         )
 
-    def extract_text(self, filepath: str) -> str:
-        """Extract text from DOCX, inserting tags before each text fragment, and returns a string"""
+    def extract_text(self, filepath: Path) -> str:
+        """Extract text from DOCX, inserting tags before each text fragment, and returns a string."""
         try:
-            document = docx.Document(filepath)
-            text_for_llm_parts = []
+            document = docx.Document(str(filepath))
+            text_parts = []
             run_index = 0
 
             for para in document.paragraphs:
@@ -51,22 +48,21 @@ class DOCXFileHandler(BaseFileHandler):
                         current_signature = self._get_run_formatting_signature(run)
                         run_index += 1
                         tag = self._generate_tag(run_index)
-                        text_for_llm_parts.append(tag)
-                    text_for_llm_parts.append(run.text)
+                        text_parts.append(tag)
+                    text_parts.append(run.text)
 
 
-            full_text_for_llm = "".join(text_for_llm_parts)
-            return full_text_for_llm
+            full_text = "".join(text_parts)
+            return full_text
 
         except Exception as e:
             logging.error(f"Error extracting text/mapping from {filepath}: {e}")
             return ""
 
-    def insert_text(self, original_filepath: str, processed_chunks: list[str], output_filepath: str):
+    def insert_text(self, original_filepath: Path, processed_text: str, output_filepath: Path):
         """Update the text of fragments in the document based on the processed string with tags."""
         try:
-            processed_text_with_tags = "".join(processed_chunks)
-            document = docx.Document(original_filepath)
+            document = docx.Document(str(original_filepath))
             new_run_map: dict[str, Run] = {}
             leftover_runs_map: dict[str, list[Run]] = {}
             run_index = 0
@@ -88,7 +84,7 @@ class DOCXFileHandler(BaseFileHandler):
 
             tag_pattern = re.compile(f"({self.TAG_PREFIX}\\d+{self.TAG_SUFFIX})", re.DOTALL)
 
-            parts = tag_pattern.split(processed_text_with_tags)
+            parts = tag_pattern.split(processed_text)
 
             processed_runs_count = 0
             missed_tags = set(new_run_map.keys())
@@ -114,7 +110,7 @@ class DOCXFileHandler(BaseFileHandler):
                 for run in leftover_runs_map[tag]:
                     run.text = ""
 
-            document.save(output_filepath)
+            document.save(str(output_filepath))
 
         except Exception as e:
             logging.error(f"Error inserting processed text into {output_filepath}: {e}")

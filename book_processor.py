@@ -1,7 +1,7 @@
-import os
 import re
 import time
 import logging
+from pathlib import Path
 import asyncio
 from tqdm.asyncio import tqdm
 from file_handler import FileHandler
@@ -18,30 +18,46 @@ class ProcessingFailedError(Exception):
     """Raised when the code fails to process chunk in configured number of tries."""
     pass
 
+
+async def tqdm_gather(*fs, return_exceptions=False, **kwargs):
+    """
+    tqdm wrapper for asyncio.gather doesn't support return_exceptions param for some reason.
+    So here is a workaround.
+    """
+    if not return_exceptions:
+        return await tqdm.gather(*fs, **kwargs)
+
+    async def wrap(f):
+        try:
+            return await f
+        except Exception as e:
+            return e
+
+    return await tqdm.gather(*map(wrap, fs), **kwargs)
+
 class BookProcessor:
     """
     A class for processing books by splitting them into chunks,
     processing each chunk with an LLM, and reassembling the processed chunks.
     """
-    def __init__(self, file_type: str, result_filename: str, config: dict[any, any]):
+    def __init__(self, config: dict[any, any], file_type: str):
         """
             Initializes the BookProcessor.
 
             Args:
                 file_type: The extension of the book file (e.g., 'fb2', 'txt').
-                result_filename: The base name for the output file (without extension).
                 config: Configuration dictionary containing settings for
                                          processing, LLM, file handling, etc.
             """
         self.config = config
         self.llm = LLM(self.config).llm
-        os.makedirs(config["processing"]["output_dir"], exist_ok=True)
+        self.output_dir = Path(config["processing"]["output_dir"])
+        self.output_dir.mkdir(parents=True, exist_ok=True)
         self.logger = logging.getLogger(__name__)
         self.file_handler = FileHandler(file_type, self.config).file_handler
         self.heuristic_applier = HeuristicApplier(self.config)
         self.book_extension = file_type
         self.semaphore = asyncio.Semaphore(self.config["processing"]["workers_amount"])
-        self.result_filename = result_filename
 
     def split_into_chunks(self, text: str, chunk_size: int) -> list[str]:
         """
@@ -212,7 +228,7 @@ class BookProcessor:
             self.logger.info(f"Successfully processed and saved chunk {i + 1}/{total_chunks}")
             return processed_chunk_text
 
-    async def process_book(self, filepath: str):
+    async def process_book(self, input_file: Path, output_file: Path):
         """
         Processes an entire book file.
 
@@ -226,14 +242,15 @@ class BookProcessor:
         7. Clearing the chunk cache for the book.
 
         Args:
-            filepath: The path to the book file to be processed.
+            input_file: The book to be processed.
+            output_file: Name of the processed book's file.
     """
-        self.logger.info(f"Processing: {filepath}")
-        book_name = filepath[:filepath.rfind(".")]
+        self.logger.info(f"Processing: {input_file}")
+        book_name = input_file.stem
         await self.file_handler.create_cache_dir(book_name)
-        output_filepath = os.path.join(self.config["processing"]["output_dir"], f"{self.result_filename}.{self.book_extension}")
+        output_filepath = Path(self.config["processing"]["output_dir"]) / output_file
 
-        text = self.file_handler.extract_text(filepath)
+        text = self.file_handler.extract_text(input_file)
         chunks = self.split_into_chunks(text, self.config["processing"]["chunk_size"])
 
         tasks = []
@@ -256,7 +273,7 @@ class BookProcessor:
         self.logger.info(f"Starting processing for {len(tasks)} chunks using up to {self.semaphore._value} concurrent workers.")
 
         start_time_processing = time.time()
-        results = await tqdm.gather(*tasks, desc=f"Processing {filepath}", total=len(chunks), initial=len(chunks) - len(indices_to_process), bar_format="{l_bar}{bar}{r_bar}\n")
+        results = await tqdm_gather(*tasks, desc=f"Processing {input_file}", total=len(chunks), initial=len(chunks) - len(indices_to_process), bar_format="{l_bar}{bar}{r_bar}\n", return_exceptions=True)
         end_time_processing = time.time()
         self.logger.info(f"Finished processing {len(tasks)} chunks in {end_time_processing - start_time_processing:.2f} seconds.")
 
@@ -278,7 +295,7 @@ class BookProcessor:
         final_text = "".join(processed_chunks_results)
 
         try:
-            await asyncio.to_thread(self.file_handler.insert_text, filepath, final_text, output_filepath)
+            await asyncio.to_thread(self.file_handler.insert_text, input_file, final_text, output_filepath)
             self.logger.info(f"Successfully assembled and saved final result to {output_filepath}")
 
         except Exception as e:

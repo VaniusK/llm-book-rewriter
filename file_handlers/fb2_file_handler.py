@@ -1,28 +1,26 @@
 import re
 from file_handlers.base_file_handler import BaseFileHandler
+from pathlib import Path
 
 
 class FB2FileHandler(BaseFileHandler):
     """Class for handling FB2 files."""
 
-    def insert_text(self, original_filepath: str, processed_chunks: list[str], output_filepath: str):
+    def insert_text(self, original_filepath: Path, processed_text: str, output_filepath: Path):
         """Replace fb2's <body> with given text."""
-        with open(original_filepath, 'r', encoding="utf-8") as input_file:
-            with open(output_filepath, 'w', encoding="utf-8") as output_file:
-                input_file_text = input_file.read()
-                pattern = r"<body.*?>(.*?)</body>"
-                flags = re.DOTALL | re.IGNORECASE
-                input_file_text = re.sub(pattern, f"{processed_chunks}", input_file_text, flags=flags)
-                output_file.write(input_file_text)
+        input_file_text = original_filepath.read_text(encoding = "utf-8")
+        pattern = r"<body.*?>(.*?)</body>"
+        flags = re.DOTALL | re.IGNORECASE
+        resulting_text = re.sub(pattern, f"{processed_text}", input_file_text, flags=flags)
+        output_filepath.write_text(resulting_text, encoding = "utf-8")
 
-    def extract_text(self, filepath: str) -> str:
+    def extract_text(self, filepath: Path) -> str:
         """Extract fb2's <body> content."""
-        with open(filepath, 'r', encoding="utf-8") as f:
-            content = f.read()
-            pattern = r"<body.*?>.*?</body>"
-            flags = re.DOTALL | re.IGNORECASE
-            match = re.search(pattern, content, flags=flags)
-            if match:
-                return match.group(0)
-            else:
-                return ""
+        content = filepath.read_text(encoding = "utf-8")
+        pattern = r"<body.*?>.*?</body>"
+        flags = re.DOTALL | re.IGNORECASE
+        match = re.search(pattern, content, flags=flags)
+        if match:
+            return match.group(0)
+        else:
+            return ""

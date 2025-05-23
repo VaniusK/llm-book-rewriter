@@ -1,6 +1,9 @@
 import logging
 import asyncio
 from config import config
+from pathlib import Path
+from book_processor import BookProcessor
+
 
 logging.basicConfig(
     level=logging.INFO,
@@ -9,20 +12,21 @@ logging.basicConfig(
 )
 logging.getLogger('google_genai').setLevel(logging.WARNING)
 logging.getLogger('httpx').setLevel(logging.WARNING)
-import os
-from book_processor import BookProcessor
+logging.getLogger('httpcore').setLevel(logging.WARNING)
 
 supported_extensions = ["fb2", "txt", "docx"]
 sys_files = ["requirements.txt"]
 
 logger = logging.getLogger(__name__)
+input_directory = Path(".")
 
 if __name__ == "__main__":
 
-    for filename in os.listdir("."):
-        if filename in sys_files:
+    for file in input_directory.iterdir():
+        filename = file.stem
+        extension = file.suffix[1:]
+        if file in sys_files:
             continue
-        extension = filename[filename.rfind(".") + 1:]
         if extension in supported_extensions:
-            book_processor = BookProcessor(extension, f"{filename[:filename.rfind('.')]}_rewritten", config)
-            asyncio.get_event_loop().run_until_complete(book_processor.process_book(filename))
+            book_processor = BookProcessor(config, extension)
+            asyncio.get_event_loop().run_until_complete(book_processor.process_book(file, Path(f"{filename}_rewritten." + extension)))

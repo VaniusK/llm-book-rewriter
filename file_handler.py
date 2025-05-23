@@ -13,7 +13,7 @@ class FileHandler:
         self.file_handler = self.get_file_handler()
 
     def get_file_handler(self) -> object:
-        """Return file_handler class based on file_type"""
+        """Return file_handler class based on file_type."""
         module_name = f"file_handlers.{self.file_type}_file_handler"
         class_name = f"{self.file_type.upper()}FileHandler"
 

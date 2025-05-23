@@ -10,7 +10,7 @@ class Gemini(BaseLLM):
         """
         Initializes the LLM with the given model name and API key.
         Disables safety filters to avoid responses being blocked.
-        2.5-flash and potentially newer models require thinking_config
+        2.5-flash and potentially newer models require thinking_config.
         """
         self.client = genai.Client(api_key=api_key)
         self.model = model_name
