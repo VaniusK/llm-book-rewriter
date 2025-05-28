@@ -55,17 +55,25 @@ class HeuristicApplier:
 
     def preprocessing_replace_tags_with_placeholder(self, prompt: str):
         """Replace XML tags with a placeholder."""
-        replaced_tags = re.findall(r"<[^>]*>", prompt)
-        return [re.sub(r"<[^>]*>", " " + self.placeholder + " ", prompt),
-                {"replaced_tags": replaced_tags, "placeholder": self.placeholder}]
+        tags = re.findall(r"<[^>]*>", prompt)
+        for i, tag in enumerate(tags):
+            placeholder = self.placeholder
+            if "{i}" in self.placeholder:
+                placeholder = placeholder.format(i=i)
+            prompt = prompt.replace(tag, " " + placeholder + " ", 1)
+        return [prompt,
+                {"replaced_tags": tags}]
 
     def postprocessing_replace_tags_with_placeholder(self, prompt: str, postprocessing_info: dict) -> str:
         """Replace placeholders with XML tags."""
-        placeholder = postprocessing_info["placeholder"]
-        if not placeholder:
+        if "replaced_tags" not in postprocessing_info:
             return prompt
-        for tag in postprocessing_info["replaced_tags"]:
-            prompt = prompt.replace(placeholder, f"{tag}", 1)
-        # So if there are any excess placeholders, validate_response would catch tag count mismatch
-        prompt = prompt.replace(placeholder, "<>")
+        for i, tag in enumerate(postprocessing_info["replaced_tags"]):
+            placeholder = self.placeholder
+            if "{i}" in self.placeholder:
+                placeholder = placeholder.format(i=i)
+            prompt = prompt.replace(placeholder, tag, 1)
+            if "{i}" in self.placeholder and placeholder in prompt:
+                # In case model duplicated some chunks
+                return ""
         return prompt

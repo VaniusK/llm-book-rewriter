@@ -29,9 +29,9 @@ class TestHeuristicApplier(unittest.TestCase):
         self.assertEqual(heuristic_applier.preprocessing_remove_commas("Apples, bananas, oranges"),
                          ["Apples bananas oranges", {}])
         self.assertEqual(heuristic_applier.preprocessing_replace_tags_with_placeholder("<br> text <br>"),
-                         [" <image/>  text  <image/> ", {"replaced_tags": ["<br>", "<br>"], "placeholder": "<image/>"}])
+                         [" <image/>  text  <image/> ", {"replaced_tags": ["<br>", "<br>"]}])
         self.assertEqual(heuristic_applier.postprocessing_replace_tags_with_placeholder("<image/> text <image/>", {
-            "replaced_tags": ["<br>", "<br>"], "placeholder": "<image/>"}), "<br> text <br>")
+            "replaced_tags": ["<br>", "<br>"]}), "<br> text <br>")
 
 
 if __name__ == '__main__':

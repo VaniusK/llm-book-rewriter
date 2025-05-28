@@ -60,6 +60,8 @@ class TestBookProcessor(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(processor.format_response("\n\nSome text\n\n", "\t New text \t"), "\n\nNew text\n\n")
         self.assertEqual(processor.format_response("<body> content <body/>", "\n  <body> content2 <body/>  \n"),
                          "<body> content2 <body/>")
+        self.assertEqual(processor.format_response("<v>Как взор его был быстр и нежин,</v>", "<v> Как взор его был быстр и нежен, </v>"),
+                         "<v>Как взор его был быстр и нежен,</v>")
 
     @patch("book_processor.FileHandler")
     @patch("book_processor.LLM")
