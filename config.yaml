@@ -9,13 +9,18 @@ openrouter:
   api_key: "YOUR_KEY"
   model: "deepseek/deepseek-chat-v3-0324:free"
 
+yandex:
+  api_key: "YOUR_KEY"
+  folder_id: "YOUR_ID"
+  model: "yandexgpt"
+
 processing:
-  chunk_size: 8000
+  chunk_size: 4000
   output_dir: "output_books"
-  provider: "gemini"
+  provider: "yandex"
   workers_amount: 3
   number_of_passes: 1
-  number_of_retries: 50
+  number_of_retries: 1
   docx_merge_runs: True
 
 prompt: |
@@ -35,5 +40,5 @@ prompt: |
   3. Сохраните исходный состав и порядок конструкций вида "(tag [X])".
 heuristics:
   remove_commas: False
-  replace_tags_with_placeholder: True
+  replace_tags_with_placeholder: False
   placeholder: "(tag [{i}])"
