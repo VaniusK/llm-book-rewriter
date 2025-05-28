@@ -2,7 +2,7 @@ gemini:
   api_key: "YOUR_KEY"
   # use models/gemini-2.5-pro-exp-03-25 for stronger(albeit slower) model
   # UPD: Now it redirects you to gemini-2.5-pro-exp-05-06 which got nerfed and now is barely better than 2.0-flash
-  model: "models/gemini-2.5-flash-preview-05-20"
+  model: "models/gemini-2.0-flash"
 
 openrouter:
   api_key: "YOUR_KEY"
@@ -13,11 +13,17 @@ yandex:
   folder_id: "YOUR_ID"
   model: "yandexgpt"
 
+# Also requires certificates of the MoDDCMM(Минцифры)
+gigachat:
+  api_key: "YOUR_KEY"
+  scope: "GIGACHAT_API_PERS"
+  model: "Gigachat"
+
 processing:
   chunk_size: 8000
   output_dir: "output_books"
   provider: "gemini"
-  workers_amount: 3
+  workers_amount: 1
   number_of_passes: 1
   number_of_retries: 1
   docx_merge_runs: True
