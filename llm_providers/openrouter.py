@@ -9,13 +9,14 @@ class OpenaiError(Exception):
 class Openrouter(BaseLLM):
     """A class for Openrouter LLM provider."""
 
-    def __init__(self, model_name: str, api_key: str):
+    def __init__(self, model_name: str, api_key: str, config: dict[any, any]):
         """Initialize the LLM with the given model name and API key."""
         self.client = AsyncOpenAI(
             base_url="https://openrouter.ai/api/v1",
             api_key=api_key,
         )
         self.model = model_name
+        self.config = config
 
     async def generate(self, prompt: str) -> str:
         """Generate text based on the given prompt."""
