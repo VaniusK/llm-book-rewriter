@@ -15,7 +15,7 @@
 **Ключевые возможности:**
 
 *   **Обработка фрагментами (Chunking):** Разбивает большие тексты на фрагменты заданного размера, стараясь учитывать границы предложений или тегов.
-*   **Интеграция с LLM:** Поддерживает Gemini Gemini и OpenRouter в качестве провайдеров LLM.
+*   **Интеграция с LLM:** Поддерживает Gemini, OpenRouter, YandexGPT, GigaChat (для использования могут потребоваться сертификаты Минцифры), LM Studio (для локальных моделей) и Custom (любой OpenAI-совместимый провайдер с возможностью указания `base_url`) в качестве провайдеров LLM.
 *   **Асинхронная обработка:** Использует `asyncio` для параллельной обработки фрагментов, значительно ускоряя процесс.
 *   **Настраиваемый промпт:** Позволяет пользователю точно указать LLM, какие изменения необходимо внести в текст.
 *   **Поддержка форматов:** Работает с файлами `.fb2`, `.txt` и `.docx`.
@@ -31,12 +31,13 @@
 * Вернитесь на эту страницу и нажмите на зелёную кнопку Code в верхней части страницы, выберите "Download ZIP". Скачайте архив, распакуйте его и файл config.yaml положите в одну папку с .exe. Остальные файлы не понадобятся.
 <br/> ИЛИ 
 * Перейдите по ссылке https://github.com/VaniusK/llm-book-rewriter/blob/main/config.yaml, скопируйте содержание файла, в одной папке с .exe создайте текстовый документ, вставьте скопированное туда, сохраните. Переименуйте файл в config.yaml.
-<br/><br/>**Если есть доступ через ЕЭС, Швейцарию или Великобританию:**
+<br/><br/>**Если есть доступ через ЕЭС, Швейцарию или Великобританию (для Gemini):**
 * Перейдите на https://aistudio.google.com/apikey, нажмите на синюю кнопку "Create API key", следуйте инструкциям. Полученный ключ скопируйте в файл config.yaml(открывайте его с помощью, например, блокнота) в поле "gemini: api_key" вместо "YOUR_KEY"(результат должен быть api_key: "XXX"), сохраните изменения.
-<br/><br/>**Если доступа нет:**
-* Перейдите на https://openrouter.ai/settings/keys, зарегистрируйтесь, нажмите на кнопку "Create key", следуйте инструкциям. Полученный ключ скопируйте в файл config.yaml(открывайте его с помощью, например, блокнота) в поле "openrouter: api_key" вместо "YOUR_KEY"(результат должен быть api_key: "XXX"), сохраните изменения.
-* Перейдите на https://openrouter.ai/settings/privacy и включите возможность обучения на ваших данных(без этого работать не будет).
-* **ВАЖНО:** Как видно из пункта выше, Openrouter в бесплатном режиме собирает данные для обучения моделей. Используйте только для теста. **НЕ ИСПОЛЬЗУЙТЕ НА ВАШИХ КНИГАХ**. Рассмотрите Gemini.
+<br/><br/>**Если доступа к Gemini нет или хотите использовать других провайдеров:**
+* **OpenRouter:** Перейдите на https://openrouter.ai/settings/keys, зарегистрируйтесь, нажмите на кнопку "Create key", следуйте инструкциям. Полученный ключ скопируйте в файл config.yaml в поле "openrouter: api_key" вместо "YOUR_KEY".
+    * Перейдите на https://openrouter.ai/settings/privacy и включите возможность обучения на ваших данных (без этого бесплатные модели могут не работать).
+    * **ВАЖНО (OpenRouter Free):** Как видно из пункта выше, Openrouter в бесплатном режиме собирает данные для обучения моделей. Используйте только для теста. **НЕ ИСПОЛЬЗУЙТЕ НА ВАШИХ КНИГАХ, если конфиденциальность важна.** Рассмотрите Gemini или платные опции OpenRouter.
+* **YandexGPT, GigaChat, LM Studio, Custom:** Настройте соответствующие поля в `config.yaml` согласно инструкциям в разделе "API Ключи и Провайдеры LLM" и "Настройка".
 3. Положите книгу в одну папку с .exe-файлом, запустите файл. Появится консоль с прогрессом, по окончании обработки консоль закроется, а результат будет лежать в папке output_books. При запуске вычитываются сразу все книги в папке, так что можно обрабатывать несколько за раз.
 
 ## Видеоинструкция
@@ -60,7 +61,7 @@
 
 ## 🔑 API Ключи и Провайдеры LLM
 
-Программа поддерживает два провайдера LLM:
+Программа поддерживает следующие провайдеры LLM:
 
 1.  **Google Gemini:**
     *   **Получение ключа:**
@@ -74,12 +75,25 @@
     *   **Получение ключа:** Зарегистрируйтесь на [OpenRouter.ai](https://openrouter.ai/) и получите API-ключ.
     *   **Модели (примеры):** `deepseek/deepseek-chat-v3-0324:free`, `google/gemini-flash-1.5`. OpenRouter предоставляет доступ к множеству моделей, включая бесплатные.
     *   **Бесплатные лимиты (примерные):** ~50 запросов в день на модели из категории "Free".
+3.  **YandexGPT:**
+    *   Использует API от Yandex. Потребуется API-ключ.
+    *   *Детали по моделям и получению ключа см. в официальной документации Yandex Cloud.*
+4.  **GigaChat:**
+    *   Использует API от Сбера. Потребуется API-ключ.
+    *   **Важно:** Для использования требуются сертификаты Минцифры России.
+    *   *Детали по моделям и получению ключа см. в официальной документации GigaChat.*
+5.  **LM Studio (Локальные модели):**
+    *   Позволяет использовать LLM, запущенные локально через приложение LM Studio.
+    *   Обычно требует указания URL локального сервера (например, `http://localhost:1234/v1`) в конфигурации при выборе провайдера `lmstudio` или `custom`.
+6.  **Custom (Пользовательский OpenAI-совместимый провайдер):**
+    *   Предназначен для подключения к любому LLM-провайдеру, который предоставляет OpenAI-совместимый API.
+    *   Требует указания `base_url` (адрес API, например, `https://llm.chutes.ai/v1/`) и, возможно, `api_key` в файле конфигурации.
 
 ## ❗ Важные Замечания
 
-*   **Доступ к API:** В **Российской Федерации** доступ к API Google Gemini на данный момент **заблокирован**. В **Нидерландах**, впрочем, всё работает. OpenRouter может служить альтернативой.
-*   **Конфиденциальность данных (Google):** При выполнении запросов из стран Европейской экономической зоны (EEA)(**и Нидерланды сюда входят**), Швейцарии или Великобритании, Gemini в соответствии со своей политикой, **не использует ваши данные для обучения моделей.**
-*   **Фильтры контента (Google Gemini):** Модели Gemini имеют встроенные фильтры безопасности. Иногда они могут срабатывать **слишком агрессивно**, блокируя даже безобидные фрагменты текста. Если вы сталкиваетесь с частыми блокировками, попробуйте упростить промпт, использовать менее строгую модель (Flash) или переключиться на OpenRouter, где политика фильтрации может отличаться.
+*   **Доступ к API:** В **Российской Федерации** доступ к API Google Gemini на данный момент **заблокирован**. В **Нидерландах**, впрочем, всё работает. OpenRouter, YandexGPT, GigaChat могут служить альтернативой.
+*   **Конфиденциальность данных (Google):** При выполнении запросов из стран Европейской экономической зоны (EEA)(**и Нидерланды сюда входят**), Швейцарии или Великобритании, Gemini в соответствии со своей политикой, **не использует ваши данные для обучения моделей.** Для других провайдеров ознакомьтесь с их политиками конфиденциальности.
+*   **Фильтры контента (Google Gemini):** Модели Gemini имеют встроенные фильтры безопасности. Иногда они могут срабатывать **слишком агрессивно**, блокируя даже безобидные фрагменты текста. Если вы сталкиваетесь с частыми блокировками, попробуйте упростить промпт, использовать менее строгую модель (Flash) или переключиться на другого провайдера, где политика фильтрации может отличаться.
 *   **Отслеживание изменений в Google Docs (для DOCX):** Если вы хотите сравнить оригинальный `.docx` и обработанный файл с помощью функции "Сравнить документы" в Gemini Docs, стандартный способ (загрузить оба) может не показать изменения корректно. Чтобы сравнение работало надежно:
     1.  Загрузите *оригинальный* файл (`.docx`) в Google Docs.
     2.  **Скачайте** его обратно из Google Docs в формате `.docx`. Этот скачанный файл будет вашей "базовой" версией для сравнения.
@@ -90,11 +104,15 @@
 
 1.  Положите исполняемый файл программы (`.exe`) в одну папку с config.yaml
 2.  Откройте файл `config.yaml` в текстовом редакторе и внесите необходимые изменения:
-    *   **`google.api_key` / `openrouter.api_key`:** Вставьте ваш API-ключ для выбранного провайдера в кавычках.
-    *   **`processing.provider`:** Укажите `google` или `openrouter`.
-    *   **`google.model` / `openrouter.model`:** Укажите желаемую модель LLM (см. примеры выше).
+    *   **Ключи API и специфичные параметры провайдеров:**
+        *   **`google.api_key`, `openrouter.api_key`, `yandexgpt.api_key`, `gigachat.api_key`, `custom.api_key`:** Вставьте ваш API-ключ для соответствующего провайдера в кавычках. Для некоторых провайдеров (например, LM Studio, если используется без ключа) ключ может не требоваться.
+        *   **`custom.base_url`:** Если `processing.provider` установлен в `custom`, укажите здесь базовый URL API вашего провайдера (например, `"https://api.example.com/v1/"`).
+        *   **`lmstudio.base_url` (или аналогичный параметр, если `lmstudio` выбран как провайдер):** Если `processing.provider` установлен в `lmstudio`, здесь может указываться URL вашего локального сервера LM Studio (например, `"http://localhost:1234/v1"`). LM Studio также можно использовать через провайдер `custom`, указав его `base_url`.
+    *   **`processing.provider`:** Укажите одного из поддерживаемых провайдеров: `google`, `openrouter`, `yandexgpt`, `gigachat`, `lmstudio` или `custom`.
+    *   **Модели LLM для провайдеров:**
+        *   **`google.model`, `openrouter.model`, `yandexgpt.model`, `gigachat.model`, `custom.model`, `lmstudio.model`:** Укажите желаемую модель LLM для выбранного провайдера (см. документацию провайдера или примеры выше для Gemini/OpenRouter). Для LM Studio это может быть имя модели, загруженной на локальном сервере.
     *   **`processing.chunk_size`:** Размер фрагмента в символах. **Рекомендуемое значение: 8000.** Меньшие значения могут улучшить качество обработки, но увеличат количество запросов и время. Большие значения ускоряют, но могут ухудшить качество.
-    *   **`processing.workers_amount`:** Количество одновременных запросов к API. Высокие значения **потенциально увеличивают скорость** обработки. Программа работает стабильно при любых значениях, но слишком высокие могут привести к большому количеству ошибок (Resourse Exhausted) в консоли.
+    *   **`processing.workers_amount`:** Количество одновременных запросов к API. Высокие значения **потенциально увеличивают скорость** обработки. Программа работает стабильно при любых значениях, но слишком высокие могут привести к большошему количеству ошибок (Resourse Exhausted) в консоли.
         *   Для "медленных" моделей (например, `gemini-2.5-pro-exp-03-25`): рекомендуется **1-3**.
         *   Для "быстрых" моделей (например, `gemini-2.0-flash`): рекомендуется **3-5**.
     *   **`processing.number_of_passes`:** Сколько раз каждый фрагмент будет обработан LLM. В текущей версии значение больше 1 **практически бесполезно**. Оставьте **1**.
@@ -114,7 +132,7 @@
 
     **Наглядный пример:**
     Допустим, в документе есть строка "Маша ела кашу". Из-за особенностей форматирования, копирования или конвертации, внутри DOCX она может быть разбита на множество `<run>` (технически это элементы `<w:r>`, но для простоты используем `<RUN>`):
-    `<RUN1/>М<RUN2/>АШ</RUN2>А ЕЛА КА<RUN3/>ШУ`
+    `<RUN1/>М<RUN2/>АШ</RUN3/>А ЕЛА КА<RUN4/>ШУ`
 
     *   **Без слияния (`False`):** Модель получит нечто вроде `@М@АШ@А ЕЛА КА@ШУ` (утрированно, реальное представление зависит от препроцессинга, но суть в фрагментации).
         *   Это **увеличивает стоимость** из-за избыточных данных/токенов.
@@ -146,6 +164,10 @@
         *   *Postprocessing:* После получения ответа от LLM, заменяет плейсхолдеры обратно на оригинальные теги в том же порядке.
     *   **Когда использовать:** **Настоятельно рекомендуется для форматов FB2 и DOCX.** LLM часто плохо справляются с сохранением HTML/XML-подобных тегов. Эта эвристика "прячет" теги от LLM. **Слабые модели (обычно локальные) без этой эвристики могут вообще не справиться с обработкой тегированных форматов.**
     *   **Предостережения:** Если LLM удалит или добавит символ-плейсхолдер в тексте, восстановление тегов не удастся, и валидация (`validate_response`) скорее всего провалится.
+*   **`remove_thinking` (Postprocessing):**
+    *   **Что делает:** Вырезает из ответа LLM специальные теги `<think>` и `</think>` вместе с их содержимым. Некоторые модели (особенно те, что следуют техникам Chain-of-Thought или аналогичным) могут включать свои "рассуждения" или промежуточные шаги в вывод, оборачивая их в такие теги.
+    *   **Когда использовать:** Включите эту эвристику, если ваша LLM добавляет в ответ текст вида `<think>...рассуждения...</think>`, который не должен попадать в финальный обработанный текст книги. Это помогает очистить вывод модели от служебной информации.
+    *   **Предостережения:** Убедитесь, что теги `<think>` и `</think>` используются моделью именно для обозначения удаляемых рассуждений, а не для чего-то другого, что должно остаться в тексте.
 
 ## 🚀 Запуск
 
@@ -159,7 +181,7 @@
 ## 🔧 Устранение Неполадок
 
 *   **`RESOURCE_EXHAUSTED` (Ошибка 429 в логах):** Слишком много одновременных запросов к API, или исчерпан дневной лимит бесплатных запросов, или закончились средства на балансе при платном использовании. Уменьшите значение `processing.workers_amount` в `config.yaml` или подождите следующего дня/пополните баланс.
-*   **Сообщения о блокировке от Google (Filter):** Сработал фильтр безопасности Google Gemini. См. раздел "Важные Замечания". Попробуйте изменить промпт, использовать другую модель или провайдера (OpenRouter).
+*   **Сообщения о блокировке от Google (Filter):** Сработал фильтр безопасности Google Gemini. См. раздел "Важные Замечания". Попробуйте изменить промпт, использовать другую модель или провайдера (OpenRouter, YandexGPT, GigaChat и т.д.).
 *   **`ValidationFailedError`:** LLM изменила количество тегов `<` или `>`. Часто случается, если эвристика `replace_tags_with_placeholder` отключена для FB2/DOCX, или если LLM добавила/удалила символ-плейсхолдер при включенной эвристике. Иногда случается, обычно со второй попытки модель справляется. Убедитесь, что эвристика включена для FB2/DOCX и промпт содержит четкую инструкцию сохранять теги/плейсхолдеры.
 *   **Медленная обработка:** Увеличьте `processing.workers_amount` (осторожно!) или `processing.chunk_size`. Используйте более быстрые модели (Flash вместо Pro).
 
@@ -173,24 +195,56 @@
 
 # LLM Book Rewriter
 
-[Go to Русский](#Русский)
+[Go to Russian](#Русский)
+
+**Guaranteed to work on Windows 10**
+
+**Windows Defender might show a warning when you run the program, this is normal: it reacts to anything that doesn't have a (paid) certificate. Click "More info" -> "Run anyway". The program is clean, you can verify this yourself by checking the open-source code.**
 
 ## 📖 Description
 
-This program is designed to assist authors, editors, or readers in batch processing book texts using large language models (LLM). It automates the process of applying changes (e.g., error correction, stylization, paraphrasing) to large text files by breaking them down into manageable chunks, processing each chunk via an LLM, and reassembling the result. For example, a reader can download a purchased book in FB2 format, correct errors in it using the program, and read it comfortably.
+This program is designed to help authors, editors, or readers with batch processing of book texts using large language models (LLMs). It automates the process of applying changes (e.g., error correction, stylization, paraphrasing) to large text files by breaking them into manageable chunks, processing each chunk through an LLM, and reassembling the result. For example, a reader can download a purchased book in FB2 format, fix errors in it using the program, and read it comfortably.
 
 **Key Features:**
 
-*   **Chunking:** Splits large texts into chunks of a specified size, attempting to respect sentence or tag boundaries.
-*   **LLM Integration:** Supports Google Gemini and OpenRouter as LLM providers.
-*   **Asynchronous Processing:** Uses `asyncio` for parallel chunk processing, significantly speeding up the process.
+*   **Chunking:** Splits large texts into chunks of a specified size, trying to respect sentence or tag boundaries.
+*   **LLM Integration:** Supports Gemini, OpenRouter, YandexGPT, GigaChat (may require certificates from the Russian Ministry of Digital Development for use), LM Studio (for local models), and Custom (any OpenAI-compatible provider with the ability to specify `base_url`) as LLM providers.
+*   **Asynchronous Processing:** Uses `asyncio` for parallel processing of chunks, significantly speeding up the process.
 *   **Customizable Prompt:** Allows the user to specify exactly what changes the LLM should make to the text.
 *   **Format Support:** Works with `.fb2`, `.txt`, and `.docx` files.
-*   **Heuristics:** Applies optional heuristics before and after LLM processing to improve output quality.
-*   **State Persistence:** Caches processed chunks, allowing work to be resumed after interruption without losing progress.
-*   **Error Handling and Retries:** Handles API errors (e.g., rate limits) and automatically retries failed chunk processing attempts.
+*   **Heuristics:** Applies optional heuristics before and after LLM processing to improve the quality of the output.
+*   **State Preservation:** Caches processed chunks, allowing work to be resumed after interruption without losing progress.
+*   **Error Handling and Retries:** Can handle API errors (e.g., request limits) and automatically retry failed chunk processing attempts.
 *   **Tag Validation:** Verifies that the LLM has not added or removed tags in formats where they are important (`fb2`, `docx`).
-*   **Formatting Preservation:** Attempts to preserve original whitespace around text and tags when formatting the LLM response.
+*   **Formatting Preservation:** Tries to preserve original whitespace characters around text and tags when formatting the LLM's response.
+
+## Quick Installation and Usage Guide
+1. Go to https://github.com/VaniusK/llm-book-rewriter/releases and download the latest version's .exe file.
+2.  
+* Return to this page and click the green "Code" button at the top of the page, then select "Download ZIP". Download the archive, unzip it, and place the `config.yaml` file in the same folder as the .exe file. The other files will not be needed.
+<br/> OR 
+* Go to https://github.com/VaniusK/llm-book-rewriter/blob/main/config.yaml, copy the file's content, create a text document in the same folder as the .exe, paste the copied content there, and save it. Rename the file to `config.yaml`.
+<br/><br/>**If you have access via the EEA, Switzerland, or the UK (for Gemini):**
+* Go to https://aistudio.google.com/apikey, click the blue "Create API key" button, and follow the instructions. Copy the obtained key into the `config.yaml` file (open it with Notepad, for example) in the "gemini: api_key" field, replacing "YOUR_KEY" (the result should be api_key: "XXX"), and save the changes.
+<br/><br/>**If you don't have access to Gemini or want to use other providers:**
+* **OpenRouter:** Go to https://openrouter.ai/settings/keys, register, click the "Create key" button, and follow the instructions. Copy the obtained key into the `config.yaml` file in the "openrouter: api_key" field, replacing "YOUR_KEY".
+    * Go to https://openrouter.ai/settings/privacy and enable data training (free models may not work without this).
+    * **IMPORTANT (OpenRouter Free):** As seen in the point above, OpenRouter collects data for model training in its free mode. Use it for testing purposes only. **DO NOT USE IT ON YOUR BOOKS if confidentiality is important.** Consider Gemini or paid OpenRouter options.
+* **YandexGPT, GigaChat, LM Studio, Custom:** Configure the respective fields in `config.yaml` according to the instructions in the "API Keys and LLM Providers" and "Configuration" sections.
+3. Place your book(s) in the same folder as the .exe file and run the file. A console window will appear showing the progress. Once processing is complete, the console will close, and the result will be in the `output_books` folder. The program reads all books in the folder upon launch, so you can process multiple books at once.
+
+## Video Tutorial
+**YouTube**
+* General installation and usage (requires access via EEA, ...): https://youtu.be/GadFStZuOmw
+* OpenRouter setup (no access restrictions): https://youtu.be/pRmSRbGraZw
+
+**VK Video (doesn't seem to work for some reason)**
+* General installation and usage (requires access via EEA, ...): https://vkvideo.ru/video-182995355_456239017
+* OpenRouter setup (no access restrictions): https://vkvideo.ru/video-182995355_456239019
+
+**Google Drive**
+* General installation and usage (requires access via EEA, ...): https://drive.google.com/file/d/1zsb3cH4vZY4tiW6qOyINpBmlIh8R542U/view?usp=sharing
+* OpenRouter setup (no access restrictions): https://drive.google.com/file/d/1st2QqKw-8Vmp3yzVHW3FdtH3zKOhIXo6/view?usp=sharing
 
 ## 📦 Supported Formats
 
@@ -200,108 +254,129 @@ This program is designed to assist authors, editors, or readers in batch process
 
 ## 🔑 API Keys and LLM Providers
 
-The program supports two LLM providers:
+The program supports the following LLM providers:
 
 1.  **Google Gemini:**
-    *   **Getting a Key:**
+    *   **Obtaining a key:**
         1.  Go to the link: [https://aistudio.google.com/apikey](https://aistudio.google.com/apikey)
-        2.  Follow instructions to create and obtain your API key.
+        2.  Follow the instructions to create and obtain your API key.
     *   **Models (examples):** `models/gemini-2.0-flash`, `models/gemini-2.5-pro-exp-03-25`.
-    *   **Free Tier Limits (approximate):**
+    *   **Free limits (approximate):**
         *   `models/gemini-2.0-flash`: ~1500 requests per day.
         *   `models/gemini-2.5-pro-exp-03-25`: ~25 requests per day.
 2.  **OpenRouter:**
-    *   **Getting a Key:** Register at [OpenRouter.ai](https://openrouter.ai/) and obtain an API key.
-    *   **Models (examples):** `deepseek/deepseek-chat-v3-0324:free`, `google/gemini-flash-1.5`. OpenRouter provides access to numerous models, including free ones.
-    *   **Free Tier Limits (approximate):** ~50 requests per day on models from the "Free" category.
+    *   **Obtaining a key:** Register on [OpenRouter.ai](https://openrouter.ai/) and get an API key.
+    *   **Models (examples):** `deepseek/deepseek-chat-v3-0324:free`, `google/gemini-flash-1.5`. OpenRouter provides access to many models, including free ones.
+    *   **Free limits (approximate):** ~50 requests per day for models in the "Free" category.
+3.  **YandexGPT:**
+    *   Uses the API from Yandex. An API key will be required.
+    *   *For details on models and obtaining a key, see the official Yandex Cloud documentation.*
+4.  **GigaChat:**
+    *   Uses the API from Sber. An API key will be required.
+    *   **Important:** Requires certificates from the Russian Ministry of Digital Development for use.
+    *   *For details on models and obtaining a key, see the official GigaChat documentation.*
+5.  **LM Studio (Local Models):**
+    *   Allows using LLMs run locally via the LM Studio application.
+    *   Usually requires specifying the local server URL (e.g., `http://localhost:1234/v1`) in the configuration when selecting the `lmstudio` or `custom` provider.
+6.  **Custom (User-defined OpenAI-compatible provider):**
+    *   Designed for connecting to any LLM provider that offers an OpenAI-compatible API.
+    *   Requires specifying `base_url` (API address, e.g., `https://llm.chutes.ai/v1/`) and, optionally, `api_key` in the configuration file.
 
 ## ❗ Important Notes
 
-*   **API Access:** In the **Russian Federation**, access to the Google Gemini API is currently **blocked**. In the **Netherlands**, however, everything works. OpenRouter can serve as an alternative.
-*   **Data Privacy (Gemini):** When making requests from countries in the European Economic Area (EEA) (**including the Netherlands**), Switzerland, or the UK, Gemini, according to its policy, **does not use your data for model training.**
-*   **Content Filters (Google Gemini):** Gemini models have built-in safety filters. Sometimes they can be **overly aggressive**, blocking even harmless text fragments. If you encounter frequent blocks, try simplifying the prompt, using a less strict model (Flash), or switching to OpenRouter, where filtering policies may differ.
-*   **Google Docs Change Tracking (for DOCX):** If you want to compare the original `.docx` and the processed file using the 'Compare documents' feature in Gemini Docs, the standard method (uploading both) might not show changes correctly. For reliable comparison:
+*   **API Access:** In the **Russian Federation**, access to the Google Gemini API is currently **blocked**. However, in the **Netherlands**, everything works. OpenRouter, YandexGPT, GigaChat can serve as alternatives.
+*   **Data Privacy (Google):** When making requests from European Economic Area (EEA) countries (**including the Netherlands**), Switzerland, or the United Kingdom, Gemini, according to its policy, **does not use your data for model training.** For other providers, please review their privacy policies.
+*   **Content Filters (Google Gemini):** Gemini models have built-in safety filters. Sometimes they can be **overly aggressive**, blocking even harmless text fragments. If you encounter frequent blocks, try simplifying the prompt, using a less strict model (Flash), or switching to another provider where the filtering policy may differ.
+*   **Tracking Changes in Google Docs (for DOCX):** If you want to compare the original `.docx` and the processed file using the "Compare documents" feature in Google Docs, the standard method (uploading both) might not show changes correctly. For reliable comparison:
     1.  Upload the *original* file (`.docx`) to Google Docs.
     2.  **Download** it back from Google Docs in `.docx` format. This downloaded file will be your "base" version for comparison.
-    3.  Upload the file processed by this program (`_rewritten.docx`).
-    4.  Use the 'Tools' -> 'Compare documents' feature, selecting the file downloaded in step 2 as the base and the file uploaded in step 3 as the comparison document.
+    3.  Upload the file processed by the program (`_rewritten.docx`).
+    4.  Use the "Tools" -> "Compare documents" function, selecting the file downloaded in step 2 as the base and the file uploaded in step 3 as the one to compare.
 
 ## ⚙️ Configuration
 
 1.  Place the program's executable file (`.exe`) in the same folder as `config.yaml`.
 2.  Open the `config.yaml` file in a text editor and make the necessary changes:
-    *   **`google.api_key` / `openrouter.api_key`:** Paste your API key for the chosen provider within quotes.
-    *   **`processing.provider`:** Specify `google` or `openrouter`.
-    *   **`google.model` / `openrouter.model`:** Specify the desired LLM model (see examples above).
-    *   **`processing.chunk_size`:** Chunk size in characters. **Recommended value: 8000.** Smaller values might improve processing quality but increase the number of requests and time. Larger values speed things up but may decrease quality.
-    *   **`processing.workers_amount`:** Number of concurrent requests to the API. High values **potentially increase processing speed**. The program works stably at any value, but excessively high values can lead to many errors (Resource Exhausted) in the console.
+    *   **API Keys and provider-specific parameters:**
+        *   **`google.api_key`, `openrouter.api_key`, `yandexgpt.api_key`, `gigachat.api_key`, `custom.api_key`:** Insert your API key for the respective provider in quotes. For some providers (e.g., LM Studio, if used without a key), a key may not be required.
+        *   **`custom.base_url`:** If `processing.provider` is set to `custom`, specify your provider's API base URL here (e.g., `"https://api.example.com/v1/"`).
+        *   **`lmstudio.base_url` (or a similar parameter if `lmstudio` is selected as the provider):** If `processing.provider` is set to `lmstudio`, this is where you might specify your local LM Studio server URL (e.g., `"http://localhost:1234/v1"`). LM Studio can also be used via the `custom` provider by specifying its `base_url`.
+    *   **`processing.provider`:** Specify one of the supported providers: `google`, `openrouter`, `yandexgpt`, `gigachat`, `lmstudio`, or `custom`.
+    *   **LLM Models for providers:**
+        *   **`google.model`, `openrouter.model`, `yandexgpt.model`, `gigachat.model`, `custom.model`, `lmstudio.model`:** Specify the desired LLM model for the selected provider (see provider documentation or examples above for Gemini/OpenRouter). For LM Studio, this could be the name of the model loaded on the local server.
+    *   **`processing.chunk_size`:** Chunk size in characters. **Recommended value: 8000.** Smaller values may improve processing quality but will increase the number of requests and time. Larger values speed things up but may degrade quality.
+    *   **`processing.workers_amount`:** Number of concurrent API requests. High values **can potentially increase processing speed**. The program is stable at any value, but excessively high values can lead to a large number of errors (Resource Exhausted) in the console.
         *   For "slow" models (e.g., `gemini-2.5-pro-exp-03-25`): **1-3** is recommended.
-        *   For "fast" models (e.g., `gemini-2.0-flash`): **10-20** is recommended.
-    *   **`processing.number_of_passes`:** How many times each chunk will be processed by the LLM. In the current version, a value greater than 1 is **practically useless**. Leave it as **1**.
+        *   For "fast" models (e.g., `gemini-2.0-flash`): **3-5** is recommended.
+    *   **`processing.number_of_passes`:** How many times each chunk will be processed by the LLM. In the current version, a value greater than 1 is **practically useless**. Leave it at **1**.
     *   **`processing.output_dir`:** Folder for saving processed files (e.g., `"output_books"`).
     *   **`processing.retry_if_failed`:** `True` (recommended) to retry processing a chunk on error, `False` to skip the chunk (leave it original).
-    *   **`processing.docx_merge_runs`:** `True` (recommended) to enable merging of identical 'runs' (unit of text in docx format), `False` to disable (keep original).
+    *   **`processing.docx_merge_runs`:** `True` (recommended) to enable merging of identical 'runs' (a unit of text in docx format), `False` to disable (keep original).
 
-    **⚠️ Warning!** This feature is **experimental**, but enabling it (`True`) is **HIGHLY RECOMMENDED**.
+    **⚠️ Attention!** This feature is **experimental**, but enabling it (`True`) is **HIGHLY RECOMMENDED**.
 
-    **What it does:** Merges adjacent text segments ( `<w:r>` elements in DOCX) if their **formatting is completely identical** (font, size, color, style, etc.).
+    **What it does:** Merges adjacent text sections ( `<run>` elements in DOCX) if they have **completely identical formatting** (font, size, color, style, etc.).
 
-    **Why is it important?**
-    *   **🚀 Significantly improves quality and stability:** Removes "noise" from the document, allowing models to process text as a whole.
-    *   **💰 Reduces processing cost:** Decreases the amount of service information and the total length of text sent to the model.
+    **Why is this so important?**
+    *   **🚀 Significantly improves quality and stability:** Removes "noise" from the document, allowing models to process text as a single unit.
+    *   **💰 Reduces processing cost:** Decreases the amount of auxiliary information and the total length of text sent to the model.
 
-    **Potential drawback:** Being experimental, the feature could theoretically lead to the loss of *some* specific metadata (edit history, source) associated with the original `<w:r>` boundaries. However, the main formatting (color, style, size, etc.) **should be preserved** during merging, as only identically formatted segments are combined.
+    **Potential drawback:** Being experimental, the function could theoretically lead to the loss of *some* specific metadata (revision history, source) associated with the boundaries of the original `<run>`s. However, basic formatting (color, style, size, etc.) **should be preserved** during merging, as only identically formatted sections are combined.
 
-    **Illustrative Example:**
-    Suppose a document contains the line "Маша ела кашу" ("Masha ate porridge"). Due to formatting peculiarities, copying, or conversion, within the DOCX it might be split into multiple `<run>` (technically `<w:r>` elements, but using `<RUN>` for simplicity):
-    `<RUN1/>М<RUN2/>АШ</RUN2>А ЕЛА КА<RUN3/>ШУ`
+    **Illustrative example:**
+    Suppose a document contains the line "Mary ate porridge." Due to formatting peculiarities, copying, or conversion, within the DOCX it might be split into multiple `<run>`s (technically these are `<w:r>` elements, but we use `<RUN>` for simplicity):
+    `<RUN1/>M<RUN2/>AR</RUN3/>Y ATE POR<RUN4/>RIDGE`
 
-    *   **Without merging (`False`):** The model receives something like `@М@АШ@А ЕЛА КА@ШУ` (simplified, the actual representation depends on preprocessing, but the essence is fragmentation).
+    *   **Without merging (`False`):** The model will receive something like `@M@AR@Y ATE POR@RIDGE` (simplified, the actual representation depends on preprocessing, but the point is fragmentation).
         *   This **increases cost** due to redundant data/tokens.
-        *   It's **extremely difficult** for models to adequately process such "torn" text. The result can be unpredictable: letters might be rearranged, words distorted, text might "jump" to another paragraph or disappear entirely.
+        *   Models find it **extremely difficult** to adequately process such "torn" text. The result can be unpredictable: letters might be rearranged, words distorted, text might "jump" to another paragraph, or even disappear entirely.
 
-    *   **With merging (`True`):** If all these `<RUN>` have identical formatting, the function merges them:
-        `<RUN/>Маша ела кашу`
-        The model processes such text **correctly, reliably, and cheaper**.
+    *   **With merging (`True`):** If all these `<RUN>`s have identical formatting, the function will merge them:
+        `<RUN/>Mary ate porridge`
+        Such text is processed by the model **correctly, reliably, and more cheaply**.
 
     **Conclusion:** Despite its experimental status, it is **strongly recommended** to keep this option enabled (`True`) for most DOCX file processing tasks.
     *   **`prompt`:** **A very important parameter.** This is the instruction for the LLM.
         *   Edit the prompt text for your specific tasks (error correction, rewriting, stylization, etc.).
-        *   The prompt must contain the placeholder `{text_chunk}`, where the text fragment will be inserted.
-        *   The default prompt is very conservative and aims to minimize changes to the author's style, even with phrases like "скрипя сердцем" (grudgingly). You might want to change it.
-        *   **Important:** The standard prompt is in Russian. If you are processing text in another language, **translate the prompt into that language**, including instructions on preserving tags and whitespace. LLM performance strongly depends on the language and clarity of instructions.
-    *   **`heuristics`:** Settings for heuristics (see below). Enabled/disabled by setting `True` or `False`.
+        *   The prompt must contain the placeholder `{text_chunk}`, where the text chunk will be inserted.
+        *   The default prompt is very conservative and aims to minimize changes to the author's style, even with idiomatic phrases that might imply reluctance (the original Russian "скрипя сердцем" translates to something like "creaking with heart," meaning reluctantly or "gritting one's teeth"). You might want to change it.
+        *   **Important:** The default prompt is in Russian. If you are processing text in another language, **translate the prompt into that language**, including instructions for preserving tags and whitespace characters. The LLM's performance heavily depends on the language and clarity of instructions.
+    *   **`heuristics`:** Heuristics settings (see below). Enabled/disabled by setting to `True` or `False`.
 
 ## ✨ Heuristics
 
-Heuristics are optional text transformations applied *before* sending to the LLM (preprocessing) and *after* receiving the response (postprocessing), designed to **improve processing quality**. Configured in the `config.yaml` file under the `heuristics` section.
+Heuristics are optional text transformations applied *before* sending to the LLM (preprocessing) and *after* receiving the response (postprocessing), designed to **improve processing quality**. They are configured in the `config.yaml` file in the `heuristics` section.
 
 *   **`remove_commas` (Preprocessing, only 1st pass):**
     *   **What it does:** Removes all commas from the chunk *before* sending it to the LLM (only on the first pass if `number_of_passes: 1`).
-    *   **When to use:** Can improve results if the original text has **many unnecessary or incorrectly placed commas**, and you want the model to re-punctuate it "from scratch". **Recommended for powerful models** (e.g., `gemini-2.5-pro-exp-03-25`), which are better at restoring punctuation.
-    *   **Caveats:** Weaker models might fail to reinsert commas or place them incorrectly.
+    *   **When to use:** Can improve results if the original text has **many unnecessary or incorrectly placed commas**, and you want the model to reinsert them "from scratch." **Recommended for powerful models** (e.g., `gemini-2.5-pro-exp-03-25`) that are better at restoring punctuation.
+    *   **Caveats:** Weaker models might not reinsert commas correctly or at all.
 *   **`replace_tags_with_placeholder` (Preprocessing + Postprocessing):**
     *   **What it does:**
-        *   *Preprocessing:* Finds all tags like `<...>` (e.g., `<p>`, `</emphasis>`, `<RUN123/>`) and replaces them with special placeholder symbols (e.g., `@`, `#`, `$`). Information about the replaced tags is saved.
-        *   *Postprocessing:* After receiving the response from the LLM, replaces the placeholders back with the original tags in the same order.
-    *   **When to use:** **Strongly recommended for FB2 and DOCX formats.** LLMs often struggle to preserve HTML/XML-like tags. This heuristic "hides" tags from the LLM. **Weaker models (typically local ones) might completely fail to process tagged formats without this heuristic.**
-    *   **Caveats:** If the LLM deletes or adds a placeholder symbol in the text, tag restoration will fail, and validation (`validate_response`) will likely fail.
+        *   *Preprocessing:* Finds all tags like `<...>` (e.g., `<p>`, `</emphasis>`, `<RUN123/>`) and replaces them with special placeholder characters (e.g., `@`, `#`, `$`). Information about the replaced tags is saved.
+        *   *Postprocessing:* After receiving the LLM's response, replaces the placeholders back with the original tags in the same order.
+    *   **When to use:** **Strongly recommended for FB2 and DOCX formats.** LLMs often struggle to preserve HTML/XML-like tags. This heuristic "hides" tags from the LLM. **Weaker models (usually local ones) might not be able to process tagged formats at all without this heuristic.**
+    *   **Caveats:** If the LLM deletes or adds a placeholder character in the text, tag restoration will fail, and validation (`validate_response`) will likely fail.
+*   **`remove_thinking` (Postprocessing):**
+    *   **What it does:** Removes special tags `<think>` and `</think>` along with their content from the LLM's response. Some models (especially those following Chain-of-Thought or similar techniques) may include their "reasoning" or intermediate steps in the output, wrapping them in such tags.
+    *   **When to use:** Enable this heuristic if your LLM adds text like `<think>...reasoning...</think>` to the response, which should not be part of the final processed book text. This helps clean up the model's output from auxiliary information.
+    *   **Caveats:** Ensure that the `<think>` and `</think>` tags are used by the model specifically to denote removable reasoning and not for something else that should remain in the text.
 
-## 🚀 Usage
+## 🚀 Running the Program
 
-1.  Place your book files (`.fb2`, `.txt`, `.docx`) in the same folder as the program executable (`.exe`) and the `config.yaml` file.
+1.  Place your books (`.fb2`, `.txt`, `.docx`) in the same folder as the program's executable file (`.exe`) and the `config.yaml` file.
 2.  Run the `.exe` file.
 3.  The program will start processing the found files one by one. You will see process logs in the console.
-4.  Processed files will be saved in the folder specified by `processing.output_dir` (default `output_books`), with the suffix `_rewritten` (e.g., `my_book_rewritten.fb2`).
-5.  **Cache:** During processing, a `book_temp` folder is created, containing subfolders for each book with processed chunks (`chunkXXXXX.txt`). If the process is interrupted, on the next run, the program will read these files and continue from where it left off. **Optional**: Open in track changes mode in Word/Google Docs and review the suggested edits.
-6.  **Reset Cache:** If you want to start processing a book anew (e.g., after changing the prompt or settings), delete the corresponding subfolder inside `book_temp` (e.g., `book_temp/my_book_name/`).
+4.  Processed files will be saved in the folder specified in `processing.output_dir` (default `output_books`), with the suffix `_rewritten` (e.g., `my_book_rewritten.fb2`).
+5.  **Cache:** During processing, a `book_temp` folder is created, containing subfolders for each book with processed chunks (`chunkXXXXX.txt`). If the process is interrupted, the program will read these files on the next run and resume from where it left off. **Optional:** Open in "Track Changes" mode in Word/Google Docs and review the suggested edits.
+6.  **Resetting Cache:** If you want to reprocess a book from scratch (e.g., after changing the prompt or settings), delete the corresponding subfolder inside `book_temp` (e.g., `book_temp/my_book_name/`).
 
 ## 🔧 Troubleshooting
 
-*   **`RESOURCE_EXHAUSTED` (Error 429 in logs):** Too many concurrent requests to the API, or the daily free request limit is exhausted, or funds have run out on a paid plan. Decrease the `processing.workers_amount` in `config.yaml` or wait until the next day/top up your balance.
-*   **Blocking Messages from Google (Filter):** Gemini's safety filter was triggered. See the "Important Notes" section. Try changing the prompt, using a different model, or provider (OpenRouter).
-*   **`ValidationFailedError`:** The LLM changed the number of `<` or `>` tags. Often happens if the `replace_tags_with_placeholder` heuristic is disabled for FB2/DOCX, or if the LLM added/deleted a placeholder symbol when the heuristic is enabled. Sometimes occurs transiently; the model usually succeeds on the second attempt. Ensure the heuristic is enabled for FB2/DOCX and the prompt contains clear instructions to preserve tags/placeholders.
-*   **Slow Processing:** Increase `processing.workers_amount` (carefully!) or `processing.chunk_size`. Use faster models (Flash instead of Pro).
+*   **`RESOURCE_EXHAUSTED` (Error 429 in logs):** Too many concurrent API requests, or the daily free request limit has been reached, or funds have run out on the balance for paid usage. Reduce the `processing.workers_amount` value in `config.yaml`, wait for the next day, or top up your balance.
+*   **Blocking messages from Google (Filter):** Google Gemini's safety filter has been triggered. See the "Important Notes" section. Try changing the prompt, using a different model, or another provider (OpenRouter, YandexGPT, GigaChat, etc.).
+*   **`ValidationFailedError`:** The LLM changed the number of `<` or `>`. This often happens if the `replace_tags_with_placeholder` heuristic is disabled for FB2/DOCX, or if the LLM added/removed a placeholder character when the heuristic was enabled. It sometimes occurs; usually, the model succeeds on the second attempt. Ensure the heuristic is enabled for FB2/DOCX and the prompt clearly instructs to preserve tags/placeholders.
+*   **Slow processing:** Increase `processing.workers_amount` (carefully!) or `processing.chunk_size`. Use faster models (Flash instead of Pro).
 
 ## 📄 License
 
