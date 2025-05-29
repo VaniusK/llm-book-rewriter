@@ -6,7 +6,7 @@ gemini:
 
 openrouter:
   api_key: "YOUR_KEY"
-  model: "deepseek/deepseek-chat-v3-0324:free"
+  model: "deepseek/deepseek-r1-0528:free"
 
 yandex:
   api_key: "YOUR_KEY"
@@ -22,11 +22,17 @@ gigachat:
 processing:
   chunk_size: 8000
   output_dir: "output_books"
-  provider: "gemini"
-  workers_amount: 1
+  provider: "custom"
+  workers_amount: 3
   number_of_passes: 1
   number_of_retries: 1
   docx_merge_runs: True
+
+# OpenAI-compatible
+custom:
+  api_key: "YOUR_KEY"
+  base_url: "https://llm.chutes.ai/v1/"
+  model: "deepseek-ai/DeepSeek-R1-0528"
 
 prompt: |
   **Инструкции**
