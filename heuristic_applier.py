@@ -3,7 +3,7 @@ import logging
 
 class HeuristicApplier:
     """
-    A class for applying preprocessing and postprocessing heuristic to text prompt.
+    A class for applying preprocessing and postprocessing heuristics to text prompt.
 
     self.preprocessing_original_heuristics would only run on chunk's first pass.
     """
@@ -20,7 +20,7 @@ class HeuristicApplier:
         self.logger = logging.getLogger(__name__)
         self.preprocessing_original_heuristics = [self.preprocessing_remove_commas]
         self.preprocessing_heuristics = [self.preprocessing_replace_tags_with_placeholder]
-        self.postprocessing_heuristics = [self.postprocessing_replace_tags_with_placeholder]
+        self.postprocessing_heuristics = [self.postprocessing_replace_tags_with_placeholder, self.postprocessing_remove_thinking]
         self.placeholder = config["heuristics"]["placeholder"]
         self.config = config
 
@@ -77,3 +77,7 @@ class HeuristicApplier:
                 # In case model duplicated some chunks
                 return ""
         return prompt
+
+    def postprocessing_remove_thinking(self, prompt: str, postprocessing_info: dict) -> str:
+        """Remove <think> block for reasoning models."""
+        return re.sub(r"<think>.*?</think>", "", prompt, flags=re.DOTALL, count=1)

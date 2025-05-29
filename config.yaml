@@ -57,3 +57,4 @@ heuristics:
   remove_commas: False
   replace_tags_with_placeholder: True
   placeholder: "(tag [{i}])"
+  remove_thinking: True
