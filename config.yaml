@@ -19,6 +19,16 @@ gigachat:
   scope: "GIGACHAT_API_PERS"
   model: "Gigachat"
 
+lmstudio:
+  api_key: None
+  model: "google/gemma-3-4b"
+
+# OpenAI-compatible
+custom:
+  api_key: "YOUR_KEY"
+  base_url: "https://llm.chutes.ai/v1/"
+  model: "deepseek-ai/DeepSeek-R1-0528"
+
 processing:
   chunk_size: 8000
   output_dir: "output_books"
@@ -27,12 +37,6 @@ processing:
   number_of_passes: 1
   number_of_retries: 1
   docx_merge_runs: True
-
-# OpenAI-compatible
-custom:
-  api_key: "YOUR_KEY"
-  base_url: "https://llm.chutes.ai/v1/"
-  model: "deepseek-ai/DeepSeek-R1-0528"
 
 prompt: |
   **Инструкции**
