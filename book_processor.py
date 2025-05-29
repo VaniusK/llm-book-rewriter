@@ -6,7 +6,6 @@ import asyncio
 from tqdm.asyncio import tqdm
 from file_handler import FileHandler
 from heuristic_applier import HeuristicApplier
-from google import genai
 from llm import LLM
 
 
@@ -198,14 +197,6 @@ class BookProcessor:
                     self.logger.debug(chunk)
                     self.logger.debug(processed_chunk_text)
 
-                    error_occurred = True
-                except genai.errors.APIError as e:
-                    if e.status == "RESOURCE_EXHAUSTED":
-                        self.logger.error(f"API limit exhausted while processing chunk {i + 1}/{total_chunks}")
-                        retries_available += 1
-                        await asyncio.sleep(5)
-                    else:
-                        self.logger.error(f"API error happened while processing chunk {i + 1}/{total_chunks}: {e}")
                     error_occurred = True
                 except Exception as e:
                     # TODO: Change to specific exceptions: filter, api limit, etc
