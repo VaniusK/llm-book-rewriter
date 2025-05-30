@@ -20,7 +20,7 @@ class ProcessingFailedError(Exception):
 
 async def tqdm_gather(*fs, return_exceptions=False, **kwargs):
     """
-    tqdm wrapper for asyncio.gather doesn't support return_exceptions param for some reason.
+    tqdm wrapper because asyncio.gather doesn't support return_exceptions param for some reason.
     So here is a workaround.
     """
     if not return_exceptions:

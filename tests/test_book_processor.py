@@ -17,7 +17,8 @@ config = {
     "heuristics": {
         "remove_commas": False,
         "replace_tags_with_placeholder": True,
-        "placeholder": "<image/>"
+        "placeholder": "<image/>",
+        "remove_thinking": False
     }
 }
 
