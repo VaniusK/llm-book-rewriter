@@ -11,7 +11,7 @@ class FB2FileHandler(BaseFileHandler):
         input_file_text = original_filepath.read_text(encoding = "utf-8")
         pattern = r"<body.*?>(.*?)</body>"
         flags = re.DOTALL | re.IGNORECASE
-        resulting_text = re.sub(pattern, f"{processed_text}", input_file_text, flags=flags)
+        resulting_text = re.sub(pattern, lambda x: processed_text, input_file_text, flags=flags)
         output_filepath.write_text(resulting_text, encoding = "utf-8")
 
     def extract_text(self, filepath: Path) -> str:

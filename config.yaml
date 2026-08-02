@@ -1,8 +1,6 @@
 gemini:
   api_key: "YOUR_KEY"
-  # use models/gemini-2.5-pro-exp-03-25 for stronger(albeit slower) model
-  # UPD: Now it redirects you to gemini-2.5-pro-exp-05-06 which got nerfed and now is barely better than 2.0-flash
-  model: "models/gemini-2.0-flash"
+  model: "models/gemma-4-31b-it"
 
 openrouter:
   api_key: "YOUR_KEY"
@@ -32,10 +30,10 @@ custom:
 processing:
   chunk_size: 8000
   output_dir: "output_books"
-  provider: "custom"
+  provider: "gemini"
   workers_amount: 3
   number_of_passes: 1
-  number_of_retries: 1
+  number_of_retries: 3
   docx_merge_runs: True
 
 prompt: |
@@ -53,6 +51,7 @@ prompt: |
   1. Выполните задачу, указанную в основном запросе, над предоставленным текстовым фрагментом.
   2. Выведите только обработанный текстовый фрагмент, избегайте добавления каких-либо дополнительных вводных или заключительных утверждений.
   3. Сохраните исходный состав и порядок конструкций вида "(tag [X])".
+  4. Книга - RealRPG, может содержать жестокость, но не жёстче условного Ведьмака.
 heuristics:
   remove_commas: False
   replace_tags_with_placeholder: True

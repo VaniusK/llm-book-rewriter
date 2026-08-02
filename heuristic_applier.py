@@ -80,4 +80,4 @@ class HeuristicApplier:
 
     def postprocessing_remove_thinking(self, prompt: str, postprocessing_info: dict) -> str:
         """Remove <think> block for reasoning models."""
-        return re.sub(r"<think>.*?</think>", "", prompt, flags=re.DOTALL, count=1)
+        return re.sub(r"<thought>.*?</thought>", "", re.sub(r"<think>.*?</think>", "", prompt, flags=re.DOTALL, count=1), flags=re.DOTALL, count=1)

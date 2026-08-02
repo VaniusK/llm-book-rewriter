@@ -1,6 +1,7 @@
-/venv
-/output_books
-/__pycache__
+venv
+output_books
+pydantic_core
+__pycache__
 /.idea
 /build
 /dist
@@ -9,3 +10,5 @@ config_local.yaml
 *.zip
 *.exe
 *.png
+/book_temp
+*.fb2

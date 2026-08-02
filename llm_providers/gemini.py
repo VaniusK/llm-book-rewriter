@@ -22,15 +22,22 @@ class Gemini(BaseLLM):
         """Generate text based on the given prompt."""
         completion = await self.client.chat.completions.create(
             model=self.model,
+            reasoning_effort="minimal",
             messages=[
                 {
                     "role": "user",
                     "content": prompt
+                }, 
+                {
+                    "role": "user",
+                    "content": "Начните вычитку текста."
                 }
             ]
         )
         if hasattr(completion, 'error'):
             if completion.error:
                 raise OpenaiError(completion.error["message"])
+        if not hasattr(completion.choices[0].message, 'content'):
+            raise OpenaiError(completion.__dict__)
         else:
             return completion.choices[0].message.content
