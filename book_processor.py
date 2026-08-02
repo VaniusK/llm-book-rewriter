@@ -288,7 +288,7 @@ class BookProcessor:
         try:
             await asyncio.to_thread(self.file_handler.insert_text, input_file, final_text, output_filepath)
             self.logger.info(f"Successfully assembled and saved final result to {output_filepath}")
-            # await self.file_handler.clear_chunk_cache(book_name)
+            await self.file_handler.clear_chunk_cache(book_name)
 
         except Exception as e:
             self.logger.error(f"Failed to save final file {output_filepath}: {e}", exc_info=True)
