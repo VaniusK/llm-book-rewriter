@@ -15,7 +15,7 @@ logging.getLogger('httpx').setLevel(logging.WARNING)
 logging.getLogger('httpcore').setLevel(logging.WARNING)
 
 supported_extensions = ["fb2", "txt", "docx"]
-sys_files = ["requirements.txt"]
+sys_files = ["requirements"]
 
 logger = logging.getLogger(__name__)
 input_directory = Path(".")
