@@ -25,7 +25,7 @@ if __name__ == "__main__":
     for file in input_directory.iterdir():
         filename = file.stem
         extension = file.suffix[1:]
-        if file in sys_files:
+        if filename in sys_files:
             continue
         if extension in supported_extensions:
             book_processor = BookProcessor(config, extension)

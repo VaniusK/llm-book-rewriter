@@ -22,6 +22,13 @@ class Openrouter(BaseLLM):
         """Generate text based on the given prompt."""
         completion = await self.client.chat.completions.create(
             model=self.model,
+            reasoning_effort=self.config["processing"]["reasoning_effort"],
+            extra_body={
+                "reasoning": {
+                    "enabled": False if (self.config["processing"]["reasoning_effort"] == "minimal") else True,
+                    "exclude": False
+                }
+            },
             messages=[
                 {
                     "role": "user",
@@ -33,4 +40,5 @@ class Openrouter(BaseLLM):
             if completion.error:
                 raise OpenaiError(completion.error["message"])
         else:
+            print(f"Chunk cost: {completion.usage.cost_details['upstream_inference_cost']}")
             return completion.choices[0].message.content
