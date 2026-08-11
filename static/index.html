@@ -1,77 +1,260 @@
-<h1 style="text-align: center;">LLM Book Rewriter</h1>
-<p>
-    <label for="userfile">Выберите книгу(.zip, внутри которого .txt, .fb2 или .docx):</label>
-    <input id="fileInput" type="file" name="userfile">
-</p>
-<p>
-    Промпт для нейросети("{text_chunk}" автоматически заменяется на обрабатываемый кусок текста, в промпте он должен
-    встречаться ровно один раз):
-    <textarea id="promptTextarea" rows="10" cols="80">**Инструкции**
-        1. Исправьте все орфографические ошибки и опечатки.
-        2. Исправьте пунктуационные и грамматические ошибки, особое внимание уделяя сложным случаям.
-        3. Не меняйте имена/сленг/слова, в которых ты вы уверены. Не меняйте жаргонизмы.
-        4. Не меняйте оформление прямой речи(включая строчные/заглавные буквы). Не меняйте выбор тире(длинное/короткое/дефис).
-        5. Не меняйте ничего другого, не меняй обороты, даже если вам кажется, что они выглядят криво - это авторский стиль. Не соединяй предложения: в тексте может быть парцелляция, это нормально.
-  6. Ётифицируйте текст.
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Book Rewriter</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --success: #16a34a;
+            --success-hover: #15803d;
+            --radius: 8px;
+        }
 
-  **Фрагмент текста**
-  {text_chunk}
-  
-  **Дополнительно**
-  1. Выполните задачу, указанную в основном запросе, над предоставленным текстовым фрагментом.
-  2. Выведите только обработанный текстовый фрагмент, избегайте добавления каких-либо дополнительных вводных или заключительных утверждений.
-  3. Сохраните исходный состав и порядок конструкций вида "(tag [X])".</textarea>
-</p>
-<p>
-    <button id="submitButton">Обработать</button>
-</p>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-<a id="showResultLink" style="display: none;" href="/">
-  <button>Скачать результат</button>
-</a>
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.5;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 760px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 32px;
+            border-radius: var(--radius);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 12px rgba(0, 0, 0, 0.03);
+            border: 1px solid var(--border-color);
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 24px;
+            color: var(--text-main);
+            letter-spacing: -0.02em;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            font-weight: 500;
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+            color: var(--text-main);
+        }
+
+        .hint {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        input[type="file"] {
+            display: block;
+            width: 100%;
+            padding: 10px 12px;
+            font-size: 0.9rem;
+            color: var(--text-main);
+            background-color: var(--bg-color);
+            border: 1px dashed var(--border-color);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        input[type="file"]:hover {
+            border-color: #cbd5e1;
+        }
+
+        textarea {
+            width: 100%;
+            height: 260px;
+            padding: 12px;
+            font-family: monospace, sans-serif;
+            font-size: 0.875rem;
+            color: var(--text-main);
+            background-color: #fafafa;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            resize: vertical;
+            line-height: 1.4;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        button, .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 20px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #ffffff;
+            background-color: var(--primary);
+            border: none;
+            border-radius: var(--radius);
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.2s, opacity 0.2s;
+        }
+
+        button:hover, .btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-success {
+            background-color: var(--success);
+        }
+
+        .btn-success:hover {
+            background-color: var(--success-hover);
+        }
+
+        .status-message {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>LLM Book Rewriter</h1>
+    
+    <div class="form-group">
+        <label for="fileInput">Выберите книгу</label>
+        <div class="hint">Архив <code>.zip</code>, внутри которого находится <code>.txt</code>, <code>.fb2</code> или <code>.docx</code></div>
+        <input id="fileInput" type="file" name="userfile">
+    </div>
+
+    <div class="form-group">
+        <label for="promptTextarea">Промпт для нейросети</label>
+        <div class="hint">Параметр <code>{text_chunk}</code> автоматически заменяется на фрагмент текста и должен встречаться ровно один раз.</div>
+        <textarea id="promptTextarea">**Инструкции**
+1. Исправьте все орфографические ошибки и опечатки.
+2. Исправьте пунктуационные и грамматические ошибки, особое внимание уделяя сложным случаям.
+3. Не меняйте имена/сленг/слова, в которых вы уверены. Не меняйте жаргонизмы.
+4. Не меняйте оформление прямой речи (включая строчные/заглавные буквы). Не меняйте выбор тире (длинное/короткое/дефис).
+5. Не меняйте ничего другого, не меняй обороты, даже если вам кажется, что они выглядят криво - это авторский стиль. Не соединяй предложения: в тексте может быть парцелляция, это нормально.
+6. Ётифицируйте текст.
+
+**Фрагмент текста**
+{text_chunk}
+
+**Дополнительно**
+1. Выполните задачу, указанную в основном запросе, над предоставленным текстовым фрагментом.
+2. Выведите только обработанный текстовый фрагмент, избегайте добавления каких-либо дополнительных вводных или заключительных утверждений.
+3. Сохраните исходный состав и порядок конструкций вида "(tag [X])".</textarea>
+    </div>
+
+    <div class="actions">
+        <button id="submitButton">Обработать</button>
+        <span id="statusMessage" class="status-message">Обработка... Пожалуйста, подождите.</span>
+        <a id="showResultLink" style="display: none;" href="#">
+            <button type="button" class="btn btn-success">Скачать результат</button>
+        </a>
+    </div>
+</div>
 
 <script>
     const button = document.getElementById('submitButton');
+    const statusMessage = document.getElementById('statusMessage');
     let statusPollingInterval;
 
     async function onSubmit() {
-        const formData = new FormData();
-
-        const promptTextarea = document.querySelector('#promptTextarea');
-        const config = {
-            processing: {
-                prompt: promptTextarea.value
-            }
-        };
-        formData.append('config_str', JSON.stringify(config));
-
         const fileField = document.querySelector('#fileInput');
-
-        formData.append('file', fileField.files[0]);
-        const response = await fetch("/process/file", {
-            method: 'POST',
-            body: formData
-        });
-
-        if (!response.ok) {
-            throw new Error('Ошибка сервера: ' + response.status);
+        if (!fileField.files || fileField.files.length === 0) {
+            alert('Пожалуйста, выберите файл перед отправкой.');
+            return;
         }
 
-        const result = await response.json();
-        console.log('Ответ от сервера:', result);
-        const taskId = result.task_id;
-        statusPollingInterval = setInterval(() => checkTaskStatus(taskId), 5000);
+        button.disabled = true;
+        statusMessage.style.display = 'inline';
+        statusMessage.textContent = 'Отправка файла...';
 
+        const formData = new FormData();
+        const promptTextarea = document.querySelector('#promptTextarea');
+        const config = {
+            prompt: promptTextarea.value
+        };
+        formData.append('config_str', JSON.stringify(config));
+        formData.append('file', fileField.files[0]);
+
+        try {
+            const response = await fetch("/process/file", {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error('Ошибка сервера: ' + response.status);
+            }
+
+            const result = await response.json();
+            console.log('Ответ от сервера:', result);
+            const taskId = result.task_id;
+            
+            statusMessage.textContent = 'Файл обработается в фоновом режиме... Проверяем статус.';
+            statusPollingInterval = setInterval(() => checkTaskStatus(taskId), 5000);
+        } catch (err) {
+            alert('Произошла ошибка при отправке: ' + err.message);
+            button.disabled = false;
+            statusMessage.style.display = 'none';
+        }
     }
 
     async function checkTaskStatus(taskId) {
-        const response = await fetch(`/tasks/${taskId}`, {
-            method: 'GET'
-        });
-        const result = await response.json();
-        if (result.is_completed) {
-            clearInterval(statusPollingInterval);
-            await showProcessingResult(taskId);
+        try {
+            const response = await fetch(`/tasks/${taskId}`, {
+                method: 'GET'
+            });
+            const result = await response.json();
+            if (result.is_completed) {
+                clearInterval(statusPollingInterval);
+                await showProcessingResult(taskId);
+            }
+        } catch (err) {
+            console.error('Ошибка при проверке статуса:', err);
         }
     }
 
@@ -80,7 +263,17 @@
         const showResultLink = document.querySelector('#showResultLink');
         showResultLink.href = url;
         showResultLink.style.display = "inline";
+        
+        button.disabled = false;
+        statusMessage.style.display = 'none';
     }
+
+    const showResultLink = document.querySelector('#showResultLink');
+    showResultLink.addEventListener('click', () => {
+        showResultLink.style.display = 'none';
+    });
 
     button.addEventListener('click', onSubmit);
 </script>
+</body>
+</html>
