@@ -8,7 +8,6 @@ from file_handler import FileHandler
 from heuristic_applier import HeuristicApplier
 from llm import LLM
 
-
 class ValidationFailedError(Exception):
     """Raised when LLM response validation fails (e.g., tag mismatch)."""
     pass

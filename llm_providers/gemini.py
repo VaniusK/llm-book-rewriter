@@ -11,6 +11,7 @@ class Gemini(BaseLLM):
 
     def __init__(self, model_name: str, api_key: str, config: dict[any, any]):
         """Initialize the LLM with the given model name and API key."""
+        print(api_key)
         self.client = AsyncOpenAI(
             base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
             api_key=api_key,
