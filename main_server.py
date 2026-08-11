@@ -1,3 +1,4 @@
+from starlette.staticfiles import StaticFiles
 import logging
 import asyncio
 from uuid import uuid4
@@ -86,8 +87,11 @@ async def get_task_result(task_id: str, background_tasks: BackgroundTasks):
     background_tasks.add_task(remove_file, task_id + ".zip")
     background_tasks.add_task(remove_file, tasks[task_id][1])
     background_tasks.add_task(remove_file, OUTPUT_DIR / tasks[task_id][2])
+    background_tasks.add_task(lambda: tasks.pop(task_id))
     return FileResponse(
         path=task_id + ".zip",
         filename=tasks[task_id][4],
         media_type="application/zip"
     )
+
+app.mount("/", StaticFiles(directory="static", html=True), name="static")

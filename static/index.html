@@ -1,0 +1,86 @@
+<h1 style="text-align: center;">LLM Book Rewriter</h1>
+<p>
+    <label for="userfile">Выберите книгу(.zip, внутри которого .txt, .fb2 или .docx):</label>
+    <input id="fileInput" type="file" name="userfile">
+</p>
+<p>
+    Промпт для нейросети("{text_chunk}" автоматически заменяется на обрабатываемый кусок текста, в промпте он должен
+    встречаться ровно один раз):
+    <textarea id="promptTextarea" rows="10" cols="80">**Инструкции**
+        1. Исправьте все орфографические ошибки и опечатки.
+        2. Исправьте пунктуационные и грамматические ошибки, особое внимание уделяя сложным случаям.
+        3. Не меняйте имена/сленг/слова, в которых ты вы уверены. Не меняйте жаргонизмы.
+        4. Не меняйте оформление прямой речи(включая строчные/заглавные буквы). Не меняйте выбор тире(длинное/короткое/дефис).
+        5. Не меняйте ничего другого, не меняй обороты, даже если вам кажется, что они выглядят криво - это авторский стиль. Не соединяй предложения: в тексте может быть парцелляция, это нормально.
+  6. Ётифицируйте текст.
+
+  **Фрагмент текста**
+  {text_chunk}
+  
+  **Дополнительно**
+  1. Выполните задачу, указанную в основном запросе, над предоставленным текстовым фрагментом.
+  2. Выведите только обработанный текстовый фрагмент, избегайте добавления каких-либо дополнительных вводных или заключительных утверждений.
+  3. Сохраните исходный состав и порядок конструкций вида "(tag [X])".</textarea>
+</p>
+<p>
+    <button id="submitButton">Обработать</button>
+</p>
+
+<a id="showResultLink" style="display: none;" href="/">
+  <button>Скачать результат</button>
+</a>
+
+<script>
+    const button = document.getElementById('submitButton');
+    let statusPollingInterval;
+
+    async function onSubmit() {
+        const formData = new FormData();
+
+        const promptTextarea = document.querySelector('#promptTextarea');
+        const config = {
+            processing: {
+                prompt: promptTextarea.value
+            }
+        };
+        formData.append('config_str', JSON.stringify(config));
+
+        const fileField = document.querySelector('#fileInput');
+
+        formData.append('file', fileField.files[0]);
+        const response = await fetch("/process/file", {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            throw new Error('Ошибка сервера: ' + response.status);
+        }
+
+        const result = await response.json();
+        console.log('Ответ от сервера:', result);
+        const taskId = result.task_id;
+        statusPollingInterval = setInterval(() => checkTaskStatus(taskId), 5000);
+
+    }
+
+    async function checkTaskStatus(taskId) {
+        const response = await fetch(`/tasks/${taskId}`, {
+            method: 'GET'
+        });
+        const result = await response.json();
+        if (result.is_completed) {
+            clearInterval(statusPollingInterval);
+            await showProcessingResult(taskId);
+        }
+    }
+
+    async function showProcessingResult(taskId) {
+        const url = `/tasks/${taskId}/result`;
+        const showResultLink = document.querySelector('#showResultLink');
+        showResultLink.href = url;
+        showResultLink.style.display = "inline";
+    }
+
+    button.addEventListener('click', onSubmit);
+</script>
