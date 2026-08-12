@@ -12,6 +12,7 @@ from pathlib import Path
 import json
 from book_processor import BookProcessor
 from config import load_config, deep_merge_dicts, config_local_filename
+# pyrefly: ignore [missing-import]
 import diff_match_patch as dmp_module
 import time
 import re
@@ -100,7 +101,7 @@ async def process_file(config_str: str = Form(...), file: UploadFile = File(...)
         book_processor = BookProcessor(config, ext)
         input_file = INPUT_DIR / Path(id + "." + ext)
         output_file = Path(f"{id}_rewritten." + ext)
-        tasks[id] = (asyncio.create_task(book_processor.process_book(input_file, output_file)), input_file, output_file, original_filename, file.filename, config, time.time())
+        tasks[id] = (asyncio.create_task(book_processor.process_book(input_file, output_file)), input_file, output_file, original_filename, Path(file.filename), config, time.time())
     return {"message": "Начата обработка файла", "task_id": id}
 
 @app.get("/tasks/{task_id}")

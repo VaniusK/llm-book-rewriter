@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -119,7 +120,8 @@
             margin-top: 24px;
         }
 
-        button, .btn {
+        button,
+        .btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -135,7 +137,8 @@
             transition: background-color 0.2s, opacity 0.2s;
         }
 
-        button:hover, .btn:hover {
+        button:hover,
+        .btn:hover {
             background-color: var(--primary-hover);
         }
 
@@ -217,7 +220,7 @@
             font-family: monospace;
             font-weight: 600;
             font-size: 0.8rem;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
         }
 
         .workspace-grid {
@@ -246,7 +249,7 @@
             line-height: 1.8;
             color: #1e293b;
             white-space: pre-wrap;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
         }
 
         /* Inline Diffs */
@@ -282,6 +285,7 @@
             text-decoration: line-through;
             opacity: 0.35;
         }
+
         .inline-diff.status-accepted .text-added {
             opacity: 1;
         }
@@ -290,6 +294,7 @@
         .inline-diff.status-rejected .text-removed {
             opacity: 1;
         }
+
         .inline-diff.status-rejected .text-added {
             text-decoration: line-through;
             opacity: 0.35;
@@ -322,7 +327,7 @@
             border: 1px solid var(--border-color);
             border-radius: var(--radius);
             padding: 16px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
             cursor: pointer;
             transition: all 0.2s ease;
             position: relative;
@@ -334,7 +339,7 @@
 
         .sidebar-card.active {
             border-color: var(--accent);
-            box-shadow: 0 0 0 2px rgba(219, 39, 119, 0.2), 0 4px 12px rgba(0,0,0,0.05);
+            box-shadow: 0 0 0 2px rgba(219, 39, 119, 0.2), 0 4px 12px rgba(0, 0, 0, 0.05);
             background-color: #fdf2f8;
         }
 
@@ -386,13 +391,15 @@
             transition: all 0.15s ease;
         }
 
-        .btn-icon.accept:hover, .btn-icon.accept.active {
+        .btn-icon.accept:hover,
+        .btn-icon.accept.active {
             background-color: var(--success);
             color: #ffffff;
             border-color: var(--success);
         }
 
-        .btn-icon.reject:hover, .btn-icon.reject.active {
+        .btn-icon.reject:hover,
+        .btn-icon.reject.active {
             background-color: var(--danger);
             color: #ffffff;
             border-color: var(--danger);
@@ -411,22 +418,25 @@
         }
     </style>
 </head>
+
 <body>
 
-<!-- Main Form Card (Fixed max-width 760px) -->
-<div class="container">
-    <h1>LLM Book Rewriter</h1>
-    
-    <div class="form-group">
-        <label for="fileInput">Выберите книгу</label>
-        <div class="hint">Архив <code>.zip</code>, внутри которого находится <code>.txt</code>, <code>.fb2</code> или <code>.docx</code></div>
-        <input id="fileInput" type="file" name="userfile">
-    </div>
+    <!-- Main Form Card (Fixed max-width 760px) -->
+    <div class="container">
+        <h1>LLM Book Rewriter</h1>
 
-    <div class="form-group">
-        <label for="promptTextarea">Промпт для нейросети</label>
-        <div class="hint">Параметр <code>{text_chunk}</code> автоматически заменяется на фрагмент текста и должен встречаться ровно один раз.</div>
-        <textarea id="promptTextarea">**Инструкции**
+        <div class="form-group">
+            <label for="fileInput">Выберите книгу</label>
+            <div class="hint">Архив <code>.zip</code>, внутри которого находится <code>.txt</code>, <code>.fb2</code>
+                или <code>.docx</code></div>
+            <input id="fileInput" type="file" name="userfile">
+        </div>
+
+        <div class="form-group">
+            <label for="promptTextarea">Промпт для нейросети</label>
+            <div class="hint">Параметр <code>{text_chunk}</code> автоматически заменяется на фрагмент текста и должен
+                встречаться ровно один раз.</div>
+            <textarea id="promptTextarea">**Инструкции**
 1. Исправьте все орфографические ошибки и опечатки.
 2. Исправьте пунктуационные и грамматические ошибки, особое внимание уделяя сложным случаям.
 3. Не меняйте имена/сленг/слова, в которых вы уверены. Не меняйте жаргонизмы.
@@ -441,430 +451,439 @@
 1. Выполните задачу, указанную в основном запросе, над предоставленным текстовым фрагментом.
 2. Выведите только обработанный текстовый фрагмент, избегайте добавления каких-либо дополнительных вводных или заключительных утверждений.
 3. Сохраните исходный состав и порядок конструкций вида "(tag [X])".</textarea>
-    </div>
+        </div>
 
-    <div class="actions">
-        <button id="submitButton">Обработать</button>
-        <span id="statusMessage" class="status-message">Обработка... Пожалуйста, подождите.</span>
-        <a id="showResultLink" style="display: none;" href="#">
-            <button type="button" class="btn btn-success">Скачать результат</button>
-        </a>
-    </div>
-</div>
-
-<!-- Diff Review Workspace (Rendered outside main container card, max-width 1240px) -->
-<div id="diffSection" class="diff-workspace-container">
-    <div class="diff-header">
-        <h2>Исправления в тексте</h2>
-        <div class="diff-controls">
-            <button type="button" class="btn btn-sm btn-outline" id="acceptAllBtn">Принять все</button>
-            <button type="button" class="btn btn-sm btn-outline" id="rejectAllBtn">Отклонить все</button>
+        <div class="actions">
+            <button id="submitButton">Обработать</button>
+            <span id="statusMessage" class="status-message">Обработка... Пожалуйста, подождите.</span>
+            <a id="showResultLink" style="display: none;" href="#">
+                <button type="button" class="btn btn-success">Скачать результат</button>
+            </a>
         </div>
     </div>
 
-    <div class="hotkey-banner">
-        <div>
-            <strong>Горячие клавиши:</strong> 
-            <span class="hotkey-badge">A</span> / <span class="hotkey-badge">Y</span> / <span class="hotkey-badge">Enter</span> / <span class="hotkey-badge">→</span> Принять | 
-            <span class="hotkey-badge">R</span> / <span class="hotkey-badge">N</span> / <span class="hotkey-badge">Del</span> / <span class="hotkey-badge">←</span> Отклонить | 
-            <span class="hotkey-badge">↓</span> / <span class="hotkey-badge">J</span> Нав. | 
-            <span class="hotkey-badge">↑</span> / <span class="hotkey-badge">K</span> Пред.
+    <!-- Diff Review Workspace (Rendered outside main container card, max-width 1240px) -->
+    <div id="diffSection" class="diff-workspace-container">
+        <div class="diff-header">
+            <h2>Исправления в тексте</h2>
+            <div class="diff-controls">
+                <button type="button" class="btn btn-sm btn-outline" id="acceptAllBtn">Принять все</button>
+                <button type="button" class="btn btn-sm btn-outline" id="rejectAllBtn">Отклонить все</button>
+            </div>
+        </div>
+
+        <div class="hotkey-banner">
+            <div>
+                <strong>Горячие клавиши:</strong>
+                <span class="hotkey-badge">A</span> / <span class="hotkey-badge">Y</span> / <span
+                    class="hotkey-badge">Enter</span> / <span class="hotkey-badge">→</span> Принять |
+                <span class="hotkey-badge">R</span> / <span class="hotkey-badge">N</span> / <span
+                    class="hotkey-badge">Del</span> / <span class="hotkey-badge">←</span> Отклонить |
+                <span class="hotkey-badge">↓</span> / <span class="hotkey-badge">J</span> Нав. |
+                <span class="hotkey-badge">↑</span> / <span class="hotkey-badge">K</span> Пред.
+            </div>
+        </div>
+
+        <div class="workspace-grid">
+            <!-- Left: Document continuous text viewer -->
+            <div id="documentViewer" class="document-viewer"></div>
+
+            <!-- Right: Diffs sidebar -->
+            <div id="sidebarDiffs" class="sidebar-diffs"></div>
+        </div>
+
+        <div class="finish-container">
+            <button type="button" id="finishEditButton" class="btn btn-success">Закончить редактирование</button>
         </div>
     </div>
 
-    <div class="workspace-grid">
-        <!-- Left: Document continuous text viewer -->
-        <div id="documentViewer" class="document-viewer"></div>
+    <script>
+        const button = document.getElementById('submitButton');
+        const statusMessage = document.getElementById('statusMessage');
+        const diffSection = document.getElementById('diffSection');
+        const documentViewer = document.getElementById('documentViewer');
+        const sidebarDiffs = document.getElementById('sidebarDiffs');
+        const finishEditButton = document.getElementById('finishEditButton');
+        const acceptAllBtn = document.getElementById('acceptAllBtn');
+        const rejectAllBtn = document.getElementById('rejectAllBtn');
 
-        <!-- Right: Diffs sidebar -->
-        <div id="sidebarDiffs" class="sidebar-diffs"></div>
-    </div>
+        let statusPollingInterval;
+        let currentTaskId = null;
+        let originalText = "";
+        let diffItemsState = [];
+        let activeEditIndex = 0;
 
-    <div class="finish-container">
-        <button type="button" id="finishEditButton" class="btn btn-success">Закончить редактирование</button>
-    </div>
-</div>
-
-<script>
-    const button = document.getElementById('submitButton');
-    const statusMessage = document.getElementById('statusMessage');
-    const diffSection = document.getElementById('diffSection');
-    const documentViewer = document.getElementById('documentViewer');
-    const sidebarDiffs = document.getElementById('sidebarDiffs');
-    const finishEditButton = document.getElementById('finishEditButton');
-    const acceptAllBtn = document.getElementById('acceptAllBtn');
-    const rejectAllBtn = document.getElementById('rejectAllBtn');
-
-    let statusPollingInterval;
-    let currentTaskId = null;
-    let originalText = "";
-    let diffItemsState = [];
-    let activeEditIndex = 0;
-
-    async function onSubmit() {
-        const fileField = document.querySelector('#fileInput');
-        if (!fileField.files || fileField.files.length === 0) {
-            alert('Пожалуйста, выберите файл перед отправкой.');
-            return;
-        }
-
-        button.disabled = true;
-        statusMessage.style.display = 'inline';
-        statusMessage.textContent = 'Отправка файла...';
-        diffSection.style.display = 'none';
-
-        const formData = new FormData();
-        const promptTextarea = document.querySelector('#promptTextarea');
-        const config = {
-            prompt: promptTextarea.value
-        };
-        formData.append('config_str', JSON.stringify(config));
-        formData.append('file', fileField.files[0]);
-
-        try {
-            const response = await fetch("/process/file", {
-                method: 'POST',
-                body: formData
-            });
-
-            if (!response.ok) {
-                throw new Error('Ошибка сервера: ' + response.status);
+        async function onSubmit() {
+            const fileField = document.querySelector('#fileInput');
+            if (!fileField.files || fileField.files.length === 0) {
+                alert('Пожалуйста, выберите файл перед отправкой.');
+                return;
             }
 
-            const result = await response.json();
-            console.log('Ответ от сервера:', result);
-            currentTaskId = result.task_id;
-            
-            statusMessage.textContent = 'Файл обрабатывается в фоновом режиме... Проверяем статус.';
-            statusPollingInterval = setInterval(() => checkTaskStatus(currentTaskId), 5000);
-        } catch (err) {
-            alert('Произошла ошибка при отправке: ' + err.message);
-            button.disabled = false;
-            statusMessage.style.display = 'none';
-        }
-    }
+            button.disabled = true;
+            statusMessage.style.display = 'inline';
+            statusMessage.textContent = 'Отправка файла...';
+            diffSection.style.display = 'none';
 
-    async function checkTaskStatus(taskId) {
-        try {
-            const response = await fetch(`/tasks/${taskId}`, {
-                method: 'GET'
-            });
-            const result = await response.json();
-            if (result.is_completed) {
-                clearInterval(statusPollingInterval);
-                statusMessage.textContent = 'Обработка завершена. Загружаем исправления...';
-                await showDiff(taskId);
-            }
-        } catch (err) {
-            console.error('Ошибка при проверке статуса:', err);
-        }
-    }
-
-    async function showDiff(taskId) {
-        try {
-            const response = await fetch(`/tasks/${taskId}/diff`, {
-                method: 'GET'
-            });
-            if (!response.ok) {
-                throw new Error('Не удалось получить исправления');
-            }
-            const result = await response.json();
-            const diff_list = result.diff_list || [];
-            originalText = result.original_text || "";
-            
-            diff_list.sort((a, b) => a.source_range[0] - b.source_range[0]);
-
-            // Status can be: 'unselected' (default), 'accepted', 'rejected'
-            diffItemsState = diff_list.map((item, idx) => ({
-                ...item,
-                id: idx,
-                status: 'unselected'
-            }));
-
-            activeEditIndex = 0;
-            renderWorkspace();
-
-            diffSection.style.display = 'block';
-            statusMessage.style.display = 'none';
-            button.disabled = false;
-        } catch (err) {
-            console.error('Ошибка при загрузке диффов:', err);
-            statusMessage.textContent = 'Ошибка загрузки диффов: ' + err.message;
-            button.disabled = false;
-        }
-    }
-
-    function renderWorkspace() {
-        renderDocumentViewer();
-        renderSidebar();
-        scrollToActiveEdit();
-    }
-
-    function renderDocumentViewer() {
-        documentViewer.innerHTML = '';
-        if (!originalText) return;
-
-        let currentPos = 0;
-
-        diffItemsState.forEach((item, index) => {
-            const [srcStart, srcEnd] = item.source_range;
-
-            if (srcStart > currentPos) {
-                const textChunk = originalText.slice(currentPos, srcStart);
-                documentViewer.appendChild(document.createTextNode(textChunk));
-            }
-
-            const span = document.createElement('span');
-            span.id = `inline-edit-${index}`;
-            span.className = `inline-diff status-${item.status} ${index === activeEditIndex ? 'active' : ''}`;
-            span.onclick = (e) => {
-                e.stopPropagation();
-                setActiveEdit(index);
-            };
-
-            if (item.text_removed) {
-                const remSpan = document.createElement('span');
-                remSpan.className = 'text-removed';
-                remSpan.textContent = item.text_removed;
-                span.appendChild(remSpan);
-            }
-
-            if (item.text_added) {
-                const addSpan = document.createElement('span');
-                addSpan.className = 'text-added';
-                addSpan.textContent = item.text_added;
-                span.appendChild(addSpan);
-            }
-
-            documentViewer.appendChild(span);
-            currentPos = srcEnd;
-        });
-
-        if (currentPos < originalText.length) {
-            documentViewer.appendChild(document.createTextNode(originalText.slice(currentPos)));
-        }
-    }
-
-    function renderSidebar() {
-        sidebarDiffs.innerHTML = '';
-        if (diffItemsState.length === 0) {
-            sidebarDiffs.innerHTML = '<p class="hint">Изменений не обнаружено.</p>';
-            return;
-        }
-
-        diffItemsState.forEach((item, index) => {
-            const card = document.createElement('div');
-            card.id = `sidebar-card-${index}`;
-            card.className = `sidebar-card status-${item.status} ${index === activeEditIndex ? 'active' : ''}`;
-            card.onclick = () => setActiveEdit(index);
-
-            const header = document.createElement('div');
-            header.className = 'card-header';
-
-            const desc = document.createElement('div');
-            desc.className = 'card-description';
-
-            if (item.text_removed && item.text_added) {
-                desc.innerHTML = `Заменить <em>«${escapeHtml(item.text_removed)}»</em> на <em>«${escapeHtml(item.text_added)}»</em>`;
-            } else if (item.text_added) {
-                desc.innerHTML = `Добавить <em>«${escapeHtml(item.text_added)}»</em>`;
-            } else if (item.text_removed) {
-                desc.innerHTML = `Удалить <em>«${escapeHtml(item.text_removed)}»</em>`;
-            }
-
-            const actions = document.createElement('div');
-            actions.className = 'card-actions';
-
-            const acceptBtn = document.createElement('button');
-            acceptBtn.type = 'button';
-            acceptBtn.className = `btn-icon accept ${item.status === 'accepted' ? 'active' : ''}`;
-            acceptBtn.title = 'Принять (A / Enter)';
-            acceptBtn.innerHTML = '✓';
-            acceptBtn.onclick = (e) => {
-                e.stopPropagation();
-                setAction(index, true);
-            };
-
-            const rejectBtn = document.createElement('button');
-            rejectBtn.type = 'button';
-            rejectBtn.className = `btn-icon reject ${item.status === 'rejected' ? 'active' : ''}`;
-            rejectBtn.title = 'Отклонить (R / Del)';
-            rejectBtn.innerHTML = '✕';
-            rejectBtn.onclick = (e) => {
-                e.stopPropagation();
-                setAction(index, false);
-            };
-
-            actions.appendChild(rejectBtn);
-            actions.appendChild(acceptBtn);
-
-            header.appendChild(desc);
-            header.appendChild(actions);
-
-            card.appendChild(header);
-
-            sidebarDiffs.appendChild(card);
-        });
-    }
-
-    function setAction(index, accept) {
-        diffItemsState[index].status = accept ? 'accepted' : 'rejected';
-        if (diffItemsState.length > 0) {
-            activeEditIndex = Math.min(index + 1, diffItemsState.length - 1);
-        }
-        renderWorkspace();
-    }
-
-    function setActiveEdit(index) {
-        activeEditIndex = index;
-        renderWorkspace();
-    }
-
-    function scrollToActiveEdit() {
-        const activeInline = document.getElementById(`inline-edit-${activeEditIndex}`);
-        if (activeInline) {
-            activeInline.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-
-        const activeCard = document.getElementById(`sidebar-card-${activeEditIndex}`);
-        if (activeCard) {
-            activeCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-    }
-
-    function escapeHtml(text) {
-        return text
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    }
-
-    acceptAllBtn.addEventListener('click', () => {
-        diffItemsState.forEach(item => item.status = 'accepted');
-        renderWorkspace();
-    });
-
-    rejectAllBtn.addEventListener('click', () => {
-        diffItemsState.forEach(item => item.status = 'rejected');
-        renderWorkspace();
-    });
-
-    document.addEventListener('keydown', (e) => {
-        if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
-            return;
-        }
-
-        if (diffSection.style.display !== 'block' || diffItemsState.length === 0) {
-            return;
-        }
-
-        const key = e.key.toLowerCase();
-
-        if (key === 'a' || key === 'y' || e.key === 'Enter' || e.key === 'ArrowRight') {
-            e.preventDefault();
-            setAction(activeEditIndex, true);
-        } else if (key === 'r' || key === 'n' || e.key === 'Delete' || e.key === 'Backspace' || e.key === 'ArrowLeft') {
-            e.preventDefault();
-            setAction(activeEditIndex, false);
-        } else if (key === 'j' || e.key === 'ArrowDown') {
-            e.preventDefault();
-            activeEditIndex = Math.min(activeEditIndex + 1, diffItemsState.length - 1);
-            renderWorkspace();
-        } else if (key === 'k' || e.key === 'ArrowUp') {
-            e.preventDefault();
-            activeEditIndex = Math.max(0, activeEditIndex - 1);
-            renderWorkspace();
-        }
-    });
-
-    function constructFinalText() {
-        if (!originalText) {
-            return diffItemsState.map(item => item.status !== 'rejected' ? item.text_added : item.text_removed).join('');
-        }
-
-        let result = "";
-        let currentPos = 0;
-
-        diffItemsState.forEach(item => {
-            const [srcStart, srcEnd] = item.source_range;
-            if (srcStart > currentPos) {
-                result += originalText.slice(currentPos, srcStart);
-            }
-            // By default (or if accepted), use text_added. If rejected, keep text_removed.
-            result += (item.status !== 'rejected') ? item.text_added : item.text_removed;
-            currentPos = srcEnd;
-        });
-
-        if (currentPos < originalText.length) {
-            result += originalText.slice(currentPos);
-        }
-
-        return result;
-    }
-
-    finishEditButton.addEventListener('click', async () => {
-        if (!currentTaskId) return;
-
-        finishEditButton.disabled = true;
-        finishEditButton.textContent = 'Сохранение...';
-
-        const finalResultText = constructFinalText();
-
-        try {
             const formData = new FormData();
-            formData.append('final_text', finalResultText);
+            const promptTextarea = document.querySelector('#promptTextarea');
+            const config = {
+                prompt: promptTextarea.value
+            };
+            formData.append('config_str', JSON.stringify(config));
+            formData.append('file', fileField.files[0]);
 
-            const response = await fetch(`/tasks/${currentTaskId}/result`, {
-                method: 'POST',
-                body: formData
+            try {
+                const response = await fetch("/process/file", {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorText = (await response.json()).Text;
+                    throw new Error('Ошибка сервера: ' + response + ' ' + errorText);
+                }
+
+                const result = await response.json();
+                console.log('Ответ от сервера:', result);
+                currentTaskId = result.task_id;
+
+                statusMessage.textContent = 'Файл обрабатывается в фоновом режиме... Проверяем статус.';
+                statusPollingInterval = setInterval(() => checkTaskStatus(currentTaskId), 5000);
+            } catch (err) {
+                alert('Произошла ошибка при отправке: ' + err.message);
+                button.disabled = false;
+                statusMessage.style.display = 'none';
+            }
+        }
+
+        async function checkTaskStatus(taskId) {
+            try {
+                const response = await fetch(`/tasks/${taskId}`, {
+                    method: 'GET'
+                });
+                const result = await response.json();
+                if (result.is_completed) {
+                    clearInterval(statusPollingInterval);
+                    statusMessage.textContent = 'Обработка завершена. Загружаем исправления...';
+                    await showDiff(taskId);
+                }
+            } catch (err) {
+                console.error('Ошибка при проверке статуса:', err);
+            }
+        }
+
+        async function showDiff(taskId) {
+            try {
+                const response = await fetch(`/tasks/${taskId}/diff`, {
+                    method: 'GET'
+                });
+                if (!response.ok) {
+                    throw new Error('Не удалось получить исправления');
+                }
+                const result = await response.json();
+                const diff_list = result.diff_list || [];
+                originalText = result.original_text || "";
+
+                diff_list.sort((a, b) => a.source_range[0] - b.source_range[0]);
+
+                diffItemsState = diff_list.map((item, idx) => ({
+                    ...item,
+                    id: idx,
+                    status: 'unselected'
+                }));
+
+                activeEditIndex = 0;
+                renderWorkspace();
+
+                diffSection.style.display = 'block';
+                statusMessage.style.display = 'none';
+                button.disabled = false;
+
+                setTimeout(() => {
+                    diffSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    scrollToActiveEdit();
+                }, 100);
+            } catch (err) {
+                console.error('Ошибка при загрузке диффов:', err);
+                statusMessage.textContent = 'Ошибка загрузки диффов: ' + err.message;
+                button.disabled = false;
+            }
+        }
+
+        function renderWorkspace() {
+            renderDocumentViewer();
+            renderSidebar();
+            scrollToActiveEdit();
+        }
+
+        function renderDocumentViewer() {
+            documentViewer.innerHTML = '';
+            if (!originalText) return;
+
+            let currentPos = 0;
+
+            diffItemsState.forEach((item, index) => {
+                const [srcStart, srcEnd] = item.source_range;
+
+                if (srcStart > currentPos) {
+                    const textChunk = originalText.slice(currentPos, srcStart);
+                    documentViewer.appendChild(document.createTextNode(textChunk));
+                }
+
+                const span = document.createElement('span');
+                span.id = `inline-edit-${index}`;
+                span.className = `inline-diff status-${item.status} ${index === activeEditIndex ? 'active' : ''}`;
+                span.onclick = (e) => {
+                    e.stopPropagation();
+                    setActiveEdit(index);
+                };
+
+                if (item.text_removed) {
+                    const remSpan = document.createElement('span');
+                    remSpan.className = 'text-removed';
+                    remSpan.textContent = item.text_removed;
+                    span.appendChild(remSpan);
+                }
+
+                if (item.text_added) {
+                    const addSpan = document.createElement('span');
+                    addSpan.className = 'text-added';
+                    addSpan.textContent = item.text_added;
+                    span.appendChild(addSpan);
+                }
+
+                documentViewer.appendChild(span);
+                currentPos = srcEnd;
             });
 
-            if (!response.ok) {
-                throw new Error('Ошибка сервера при сохранении результата: ' + response.status);
+            if (currentPos < originalText.length) {
+                documentViewer.appendChild(document.createTextNode(originalText.slice(currentPos)));
             }
-
-            // Extract original filename from server Content-Disposition header
-            const disposition = response.headers.get('Content-Disposition');
-            let filename = 'result.zip';
-            if (disposition) {
-                const match = disposition.match(/filename\*?=(?:UTF-8'')?["']?([^"';]+)["']?/i);
-                if (match && match[1]) {
-                    filename = decodeURIComponent(match[1]);
-                }
-            }
-
-            const blob = await response.blob();
-            downloadBlob(blob, filename);
-        } catch (err) {
-            alert('Ошибка при скачивании результата: ' + err.message);
-        } finally {
-            finishEditButton.disabled = false;
-            finishEditButton.textContent = 'Закончить редактирование';
         }
-    });
 
-    function downloadBlob(blob, filename) {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        a.remove();
-    }
+        function renderSidebar() {
+            sidebarDiffs.innerHTML = '';
+            if (diffItemsState.length === 0) {
+                sidebarDiffs.innerHTML = '<p class="hint">Изменений не обнаружено.</p>';
+                return;
+            }
 
-    const showResultLink = document.querySelector('#showResultLink');
-    if (showResultLink) {
-        showResultLink.addEventListener('click', () => {
-            showResultLink.style.display = 'none';
+            diffItemsState.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.id = `sidebar-card-${index}`;
+                card.className = `sidebar-card status-${item.status} ${index === activeEditIndex ? 'active' : ''}`;
+                card.onclick = () => setActiveEdit(index);
+
+                const header = document.createElement('div');
+                header.className = 'card-header';
+
+                const desc = document.createElement('div');
+                desc.className = 'card-description';
+
+                if (item.text_removed && item.text_added) {
+                    desc.innerHTML = `Заменить <em>«${escapeHtml(item.text_removed)}»</em> на <em>«${escapeHtml(item.text_added)}»</em>`;
+                } else if (item.text_added) {
+                    desc.innerHTML = `Добавить <em>«${escapeHtml(item.text_added)}»</em>`;
+                } else if (item.text_removed) {
+                    desc.innerHTML = `Удалить <em>«${escapeHtml(item.text_removed)}»</em>`;
+                }
+
+                const actions = document.createElement('div');
+                actions.className = 'card-actions';
+
+                const acceptBtn = document.createElement('button');
+                acceptBtn.type = 'button';
+                acceptBtn.className = `btn-icon accept ${item.status === 'accepted' ? 'active' : ''}`;
+                acceptBtn.title = 'Принять (A / Enter)';
+                acceptBtn.innerHTML = '✓';
+                acceptBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    setAction(index, true);
+                };
+
+                const rejectBtn = document.createElement('button');
+                rejectBtn.type = 'button';
+                rejectBtn.className = `btn-icon reject ${item.status === 'rejected' ? 'active' : ''}`;
+                rejectBtn.title = 'Отклонить (R / Del)';
+                rejectBtn.innerHTML = '✕';
+                rejectBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    setAction(index, false);
+                };
+
+                actions.appendChild(rejectBtn);
+                actions.appendChild(acceptBtn);
+
+                header.appendChild(desc);
+                header.appendChild(actions);
+
+                card.appendChild(header);
+
+                sidebarDiffs.appendChild(card);
+            });
+        }
+
+        function setAction(index, accept) {
+            diffItemsState[index].status = accept ? 'accepted' : 'rejected';
+            if (diffItemsState.length > 0) {
+                activeEditIndex = Math.min(index + 1, diffItemsState.length - 1);
+            }
+            renderWorkspace();
+        }
+
+        function setActiveEdit(index) {
+            activeEditIndex = index;
+            renderWorkspace();
+        }
+
+        function scrollToActiveEdit() {
+            const activeInline = document.getElementById(`inline-edit-${activeEditIndex}`);
+            if (activeInline) {
+                activeInline.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+
+            const activeCard = document.getElementById(`sidebar-card-${activeEditIndex}`);
+            if (activeCard) {
+                activeCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        function escapeHtml(text) {
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        acceptAllBtn.addEventListener('click', () => {
+            diffItemsState.forEach(item => item.status = 'accepted');
+            renderWorkspace();
         });
-    }
 
-    button.addEventListener('click', onSubmit);
-</script>
+        rejectAllBtn.addEventListener('click', () => {
+            diffItemsState.forEach(item => item.status = 'rejected');
+            renderWorkspace();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+                return;
+            }
+
+            if (diffSection.style.display !== 'block' || diffItemsState.length === 0) {
+                return;
+            }
+
+            const key = e.key.toLowerCase();
+
+            if (key === 'a' || key === 'y' || e.key === 'Enter' || e.key === 'ArrowRight') {
+                e.preventDefault();
+                setAction(activeEditIndex, true);
+            } else if (key === 'r' || key === 'n' || e.key === 'Delete' || e.key === 'Backspace' || e.key === 'ArrowLeft') {
+                e.preventDefault();
+                setAction(activeEditIndex, false);
+            } else if (key === 'j' || e.key === 'ArrowDown') {
+                e.preventDefault();
+                activeEditIndex = Math.min(activeEditIndex + 1, diffItemsState.length - 1);
+                renderWorkspace();
+            } else if (key === 'k' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                activeEditIndex = Math.max(0, activeEditIndex - 1);
+                renderWorkspace();
+            }
+        });
+
+        function constructFinalText() {
+            if (!originalText) {
+                return diffItemsState.map(item => item.status !== 'rejected' ? item.text_added : item.text_removed).join('');
+            }
+
+            let result = "";
+            let currentPos = 0;
+
+            diffItemsState.forEach(item => {
+                const [srcStart, srcEnd] = item.source_range;
+                if (srcStart > currentPos) {
+                    result += originalText.slice(currentPos, srcStart);
+                }
+                // By default (or if accepted), use text_added. If rejected, keep text_removed.
+                result += (item.status !== 'rejected') ? item.text_added : item.text_removed;
+                currentPos = srcEnd;
+            });
+
+            if (currentPos < originalText.length) {
+                result += originalText.slice(currentPos);
+            }
+
+            return result;
+        }
+
+        finishEditButton.addEventListener('click', async () => {
+            if (!currentTaskId) return;
+
+            finishEditButton.disabled = true;
+            finishEditButton.textContent = 'Сохранение...';
+
+            const finalResultText = constructFinalText();
+
+            try {
+                const formData = new FormData();
+                formData.append('final_text', finalResultText);
+
+                const response = await fetch(`/tasks/${currentTaskId}/result`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorText = (await response.json()).detail;
+                    throw new Error('Ошибка сервера при сохранении результата: ' + response.status + ' ' + errorText);
+                }
+
+                // Extract original filename from server Content-Disposition header
+                const disposition = response.headers.get('Content-Disposition');
+                let filename = 'result.zip';
+                if (disposition) {
+                    const match = disposition.match(/filename\*?=(?:UTF-8'')?["']?([^"';]+)["']?/i);
+                    if (match && match[1]) {
+                        filename = decodeURIComponent(match[1]);
+                    }
+                }
+
+                const blob = await response.blob();
+                downloadBlob(blob, filename);
+            } catch (err) {
+                alert('Ошибка при скачивании результата: ' + err.message);
+            } finally {
+                finishEditButton.disabled = false;
+                finishEditButton.textContent = 'Закончить редактирование';
+            }
+        });
+
+        function downloadBlob(blob, filename) {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+        }
+
+        const showResultLink = document.querySelector('#showResultLink');
+        if (showResultLink) {
+            showResultLink.addEventListener('click', () => {
+                showResultLink.style.display = 'none';
+            });
+        }
+
+        button.addEventListener('click', onSubmit);
+    </script>
 </body>
+
 </html>
