@@ -12,8 +12,9 @@ from pathlib import Path
 import json
 from book_processor import BookProcessor
 from config import load_config, deep_merge_dicts, config_local_filename
-import difflib
+import diff_match_patch as dmp_module
 import time
+import re
 from contextlib import asynccontextmanager
 
 
@@ -141,21 +142,91 @@ async def get_task_diff(task_id: str):
     file_handler = FileHandler(tasks[task_id][1].suffix[1:], tasks[task_id][5]).file_handler
     original_text = file_handler.extract_text(tasks[task_id][1])
     processed_text = file_handler.extract_text(OUTPUT_DIR / tasks[task_id][2])
-    matcher = difflib.SequenceMatcher(isjunk=None, a=original_text, b=processed_text, autojunk=True)
-
+    pattern = re.compile(r'\w+|\s+|[^\w\s]+')
+    tokens1 = pattern.findall(original_text)
+    tokens2 = pattern.findall(processed_text)
+    
+    token_to_char = {}
+    char_to_token = []
+    
+    START_CHAR = 0xE000 
+    
+    def tokens_to_chars(tokens):
+        chars = []
+        for token in tokens:
+            if token not in token_to_char:
+                token_to_char[token] = chr(START_CHAR + len(char_to_token))
+                char_to_token.append(token)
+            chars.append(token_to_char[token])
+        return "".join(chars)
+        
+    chars1 = tokens_to_chars(tokens1)
+    chars2 = tokens_to_chars(tokens2)
+    
+    dmp = dmp_module.diff_match_patch()
+    diffs_chars = dmp.diff_main(chars1, chars2, False) 
+    
+    raw_diffs = []
+    for op, text_chars in diffs_chars:
+        text = "".join(char_to_token[ord(c) - START_CHAR] for c in text_chars)
+        raw_diffs.append((op, text))
+        
     diff_list = []
-    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
-        if tag == 'equal':
-            continue 
+    src_idx = 0
+    tgt_idx = 0
+    
+    i = 0
+    while i < len(raw_diffs):
+        op, text = raw_diffs[i]
+        
+        if op == 0:
+            src_idx += len(text)
+            tgt_idx += len(text)
+            i += 1
+            continue
             
-        diff_item = {
-            "operation": tag,
-            "source_range": (i1, i2),
-            "target_range": (j1, j2),
-            "text_removed": original_text[i1:i2],
-            "text_added": processed_text[j1:j2]
-        }
-        diff_list.append(diff_item)
+        next_op = raw_diffs[i+1][0] if i + 1 < len(raw_diffs) else 0
+        
+        if (op == -1 and next_op == 1) or (op == 1 and next_op == -1):
+            if op == -1:
+                del_text = text
+                ins_text = raw_diffs[i+1][1]
+            else:
+                ins_text = text
+                del_text = raw_diffs[i+1][1]
+                
+            diff_list.append({
+                "operation": "replace",
+                "source_range": (src_idx, src_idx + len(del_text)),
+                "target_range": (tgt_idx, tgt_idx + len(ins_text)),
+                "text_removed": del_text,
+                "text_added": ins_text
+            })
+            src_idx += len(del_text)
+            tgt_idx += len(ins_text)
+            i += 2
+            
+        elif op == -1:
+            diff_list.append({
+                "operation": "delete",
+                "source_range": (src_idx, src_idx + len(text)),
+                "target_range": (tgt_idx, tgt_idx),
+                "text_removed": text,
+                "text_added": ""
+            })
+            src_idx += len(text)
+            i += 1
+            
+        elif op == 1:
+            diff_list.append({
+                "operation": "insert",
+                "source_range": (src_idx, src_idx),
+                "target_range": (tgt_idx, tgt_idx + len(text)),
+                "text_removed": "",
+                "text_added": text
+            })
+            tgt_idx += len(text)
+            i += 1
     return {"diff_list": diff_list, "original_text": original_text, "processed_text": processed_text}
 
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
