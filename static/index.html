@@ -154,6 +154,138 @@
             color: var(--text-muted);
             display: none;
         }
+
+        .diff-section {
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border-color);
+            display: none;
+        }
+
+        .diff-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .diff-header h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .diff-controls {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+        }
+
+        .btn-secondary {
+            background-color: #64748b;
+        }
+
+        .btn-secondary:hover {
+            background-color: #475569;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-outline:hover {
+            background-color: #f1f5f9;
+        }
+
+        .diff-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 4px;
+            margin-bottom: 24px;
+        }
+
+        .diff-card {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 12px 16px;
+            background-color: #ffffff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            transition: border-color 0.2s, opacity 0.2s;
+        }
+
+        .diff-card.rejected {
+            opacity: 0.6;
+            background-color: #f8fafc;
+        }
+
+        .diff-content {
+            flex: 1;
+            font-family: inherit;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            word-break: break-word;
+            white-space: pre-wrap;
+        }
+
+        .diff-context {
+            color: var(--text-muted);
+        }
+
+        .diff-removed {
+            background-color: #fee2e2;
+            color: #991b1b;
+            text-decoration: line-through;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-right: 4px;
+            font-family: monospace;
+        }
+
+        .diff-added {
+            background-color: #dcfce7;
+            color: #166534;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        .diff-card-actions {
+            display: flex;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .btn-accept {
+            background-color: var(--success);
+        }
+        .btn-accept:hover {
+            background-color: var(--success-hover);
+        }
+
+        .btn-reject {
+            background-color: #ef4444;
+        }
+        .btn-reject:hover {
+            background-color: #dc2626;
+        }
+
+        .finish-container {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 16px;
+        }
     </style>
 </head>
 <body>
@@ -194,12 +326,35 @@
             <button type="button" class="btn btn-success">Скачать результат</button>
         </a>
     </div>
+
+    <div id="diffSection" class="diff-section">
+        <div class="diff-header">
+            <h2>Исправления в тексте</h2>
+        </div>
+        <div class="diff-controls">
+            <button type="button" class="btn btn-sm btn-outline" id="acceptAllBtn">Принять все</button>
+            <button type="button" class="btn btn-sm btn-outline" id="rejectAllBtn">Отклонить все</button>
+        </div>
+        <div id="diffList" class="diff-list"></div>
+        <div class="finish-container">
+            <button type="button" id="finishEditButton" class="btn btn-success">Закончить редактирование</button>
+        </div>
+    </div>
 </div>
 
 <script>
     const button = document.getElementById('submitButton');
     const statusMessage = document.getElementById('statusMessage');
+    const diffSection = document.getElementById('diffSection');
+    const diffListContainer = document.getElementById('diffList');
+    const finishEditButton = document.getElementById('finishEditButton');
+    const acceptAllBtn = document.getElementById('acceptAllBtn');
+    const rejectAllBtn = document.getElementById('rejectAllBtn');
+
     let statusPollingInterval;
+    let currentTaskId = null;
+    let originalText = "";
+    let diffItemsState = [];
 
     async function onSubmit() {
         const fileField = document.querySelector('#fileInput');
@@ -211,6 +366,7 @@
         button.disabled = true;
         statusMessage.style.display = 'inline';
         statusMessage.textContent = 'Отправка файла...';
+        diffSection.style.display = 'none';
 
         const formData = new FormData();
         const promptTextarea = document.querySelector('#promptTextarea');
@@ -232,10 +388,10 @@
 
             const result = await response.json();
             console.log('Ответ от сервера:', result);
-            const taskId = result.task_id;
+            currentTaskId = result.task_id;
             
-            statusMessage.textContent = 'Файл обработается в фоновом режиме... Проверяем статус.';
-            statusPollingInterval = setInterval(() => checkTaskStatus(taskId), 5000);
+            statusMessage.textContent = 'Файл обрабатывается в фоновом режиме... Проверяем статус.';
+            statusPollingInterval = setInterval(() => checkTaskStatus(currentTaskId), 5000);
         } catch (err) {
             alert('Произошла ошибка при отправке: ' + err.message);
             button.disabled = false;
@@ -251,27 +407,213 @@
             const result = await response.json();
             if (result.is_completed) {
                 clearInterval(statusPollingInterval);
-                await showProcessingResult(taskId);
+                statusMessage.textContent = 'Обработка завершена. Загружаем исправления...';
+                await showDiff(taskId);
             }
         } catch (err) {
             console.error('Ошибка при проверке статуса:', err);
         }
     }
 
-    async function showProcessingResult(taskId) {
-        const url = `/tasks/${taskId}/result`;
-        const showResultLink = document.querySelector('#showResultLink');
-        showResultLink.href = url;
-        showResultLink.style.display = "inline";
-        
-        button.disabled = false;
-        statusMessage.style.display = 'none';
+    async function showDiff(taskId) {
+        try {
+            const response = await fetch(`/tasks/${taskId}/diff`, {
+                method: 'GET'
+            });
+            if (!response.ok) {
+                throw new Error('Не удалось получить исправления');
+            }
+            const result = await response.json();
+            const diff_list = result.diff_list || [];
+            originalText = result.original_text || "";
+            
+            diffItemsState = diff_list.map(item => ({
+                ...item,
+                accepted: true
+            }));
+
+            renderDiffList();
+            diffSection.style.display = 'block';
+            statusMessage.style.display = 'none';
+            button.disabled = false;
+        } catch (err) {
+            console.error('Ошибка при загрузке диффов:', err);
+            statusMessage.textContent = 'Ошибка загрузки диффов: ' + err.message;
+            button.disabled = false;
+        }
+    }
+
+    function renderDiffList() {
+        diffListContainer.innerHTML = '';
+        if (diffItemsState.length === 0) {
+            diffListContainer.innerHTML = '<p class="hint">Изменений не обнаружено.</p>';
+            return;
+        }
+
+        diffItemsState.forEach((item, index) => {
+            const card = document.createElement('div');
+            card.className = `diff-card ${item.accepted ? 'accepted' : 'rejected'}`;
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'diff-content';
+
+            const [srcStart, srcEnd] = item.source_range || [0, 0];
+            const ctxBeforeLength = 40;
+            const ctxAfterLength = 40;
+
+            let prefix = "";
+            let suffix = "";
+
+            if (originalText) {
+                const beforeIdx = Math.max(0, srcStart - ctxBeforeLength);
+                prefix = originalText.slice(beforeIdx, srcStart);
+                if (beforeIdx > 0) prefix = "..." + prefix;
+
+                const afterIdx = Math.min(originalText.length, srcEnd + ctxAfterLength);
+                suffix = originalText.slice(srcEnd, afterIdx);
+                if (afterIdx < originalText.length) suffix = suffix + "...";
+            }
+
+            if (prefix) {
+                const prefixSpan = document.createElement('span');
+                prefixSpan.className = 'diff-context';
+                prefixSpan.textContent = prefix;
+                contentDiv.appendChild(prefixSpan);
+            }
+
+            if (item.text_removed) {
+                const removedSpan = document.createElement('span');
+                removedSpan.className = 'diff-removed';
+                removedSpan.textContent = item.text_removed;
+                contentDiv.appendChild(removedSpan);
+            }
+
+            if (item.text_added) {
+                const addedSpan = document.createElement('span');
+                addedSpan.className = 'diff-added';
+                addedSpan.textContent = item.text_added;
+                contentDiv.appendChild(addedSpan);
+            }
+
+            if (suffix) {
+                const suffixSpan = document.createElement('span');
+                suffixSpan.className = 'diff-context';
+                suffixSpan.textContent = suffix;
+                contentDiv.appendChild(suffixSpan);
+            }
+
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'diff-card-actions';
+
+            const acceptBtn = document.createElement('button');
+            acceptBtn.type = 'button';
+            acceptBtn.className = `btn btn-sm ${item.accepted ? 'btn-accept' : 'btn-outline'}`;
+            acceptBtn.textContent = 'Принять';
+            acceptBtn.onclick = () => {
+                diffItemsState[index].accepted = true;
+                renderDiffList();
+            };
+
+            const rejectBtn = document.createElement('button');
+            rejectBtn.type = 'button';
+            rejectBtn.className = `btn btn-sm ${!item.accepted ? 'btn-reject' : 'btn-outline'}`;
+            rejectBtn.textContent = 'Отклонить';
+            rejectBtn.onclick = () => {
+                diffItemsState[index].accepted = false;
+                renderDiffList();
+            };
+
+            actionsDiv.appendChild(acceptBtn);
+            actionsDiv.appendChild(rejectBtn);
+
+            card.appendChild(contentDiv);
+            card.appendChild(actionsDiv);
+
+            diffListContainer.appendChild(card);
+        });
+    }
+
+    acceptAllBtn.addEventListener('click', () => {
+        diffItemsState.forEach(item => item.accepted = true);
+        renderDiffList();
+    });
+
+    rejectAllBtn.addEventListener('click', () => {
+        diffItemsState.forEach(item => item.accepted = false);
+        renderDiffList();
+    });
+
+    function constructFinalText() {
+        if (!originalText) {
+            return diffItemsState.map(item => item.accepted ? item.text_added : item.text_removed).join('');
+        }
+
+        const sortedDiffs = [...diffItemsState].sort((a, b) => a.source_range[0] - b.source_range[0]);
+        let result = "";
+        let currentPos = 0;
+
+        for (const item of sortedDiffs) {
+            const [srcStart, srcEnd] = item.source_range;
+            if (srcStart > currentPos) {
+                result += originalText.slice(currentPos, srcStart);
+            }
+            result += item.accepted ? item.text_added : item.text_removed;
+            currentPos = srcEnd;
+        }
+
+        if (currentPos < originalText.length) {
+            result += originalText.slice(currentPos);
+        }
+
+        return result;
+    }
+
+    finishEditButton.addEventListener('click', async () => {
+        if (!currentTaskId) return;
+
+        finishEditButton.disabled = true;
+        finishEditButton.textContent = 'Сохранение...';
+
+        const finalResultText = constructFinalText();
+
+        try {
+            const formData = new FormData();
+            formData.append('text', finalResultText);
+            formData.append('edited_text', finalResultText);
+
+            const response = await fetch(`/tasks/${currentTaskId}/result`, {
+                method: 'POST',
+                body: formData
+            });
+
+            const blob = await response.blob();
+            downloadBlob(blob, 'result.zip');
+        } catch (err) {
+            alert('Ошибка при скачивании результата: ' + err.message);
+        } finally {
+            finishEditButton.disabled = false;
+            finishEditButton.textContent = 'Закончить редактирование';
+        }
+    });
+
+    function downloadBlob(blob, filename) {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
     }
 
     const showResultLink = document.querySelector('#showResultLink');
-    showResultLink.addEventListener('click', () => {
-        showResultLink.style.display = 'none';
-    });
+    if (showResultLink) {
+        showResultLink.addEventListener('click', () => {
+            showResultLink.style.display = 'none';
+        });
+    }
 
     button.addEventListener('click', onSubmit);
 </script>
