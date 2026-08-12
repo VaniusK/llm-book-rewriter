@@ -13,6 +13,8 @@ import json
 from book_processor import BookProcessor
 from config import load_config, deep_merge_dicts, config_local_filename
 import difflib
+import time
+from contextlib import asynccontextmanager
 
 
 logging.basicConfig(
@@ -26,17 +28,48 @@ logging.getLogger('httpcore').setLevel(logging.WARNING)
 
 tasks: dict[str, (asyncio.Task, Path, Path)] = {}
 
-app = FastAPI()
 
 MAX_FILE_SIZE = 1024 * 1024 * 10
 SUPPORTED_EXTENSIONS = ["fb2", "txt", "docx"]
 OUTPUT_DIR = Path("output_books")
 INPUT_DIR = Path("input_books")
 INPUT_DIR.mkdir(parents=True, exist_ok=True)
+PROCESSING_TIMEOUT_SECONDS = 3600
 
 def remove_file(path: Path):
     if os.path.exists(path):
         os.remove(path)
+
+def clean_directories():
+    for file in Path(".").iterdir():
+        if file.suffix[1:] == "zip":
+            remove_file(file)
+    for file in Path(INPUT_DIR).iterdir():
+        remove_file(file)
+    for file in Path(OUTPUT_DIR).iterdir():
+        remove_file(file)
+
+async def cleanup_task():
+    while True:
+        tasks_list = list(tasks.keys())
+        for task_id in tasks_list:
+            if time.time() - tasks[task_id][6] > PROCESSING_TIMEOUT_SECONDS:
+                remove_file(task_id + ".zip")
+                remove_file(tasks[task_id][1])
+                remove_file(OUTPUT_DIR / tasks[task_id][2])
+                tasks.pop(task_id)
+        await asyncio.sleep(PROCESSING_TIMEOUT_SECONDS)
+
+clean_directories()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    task = asyncio.create_task(cleanup_task())
+    yield
+    task.cancel()
+
+app = FastAPI(lifespan=lifespan)
+
 
 @app.post("/process/file")
 async def process_file(config_str: str = Form(...), file: UploadFile = File(...)):
@@ -66,7 +99,7 @@ async def process_file(config_str: str = Form(...), file: UploadFile = File(...)
         book_processor = BookProcessor(config, ext)
         input_file = INPUT_DIR / Path(id + "." + ext)
         output_file = Path(f"{id}_rewritten." + ext)
-        tasks[id] = (asyncio.create_task(book_processor.process_book(input_file, output_file)), input_file, output_file, original_filename, file.filename, config)
+        tasks[id] = (asyncio.create_task(book_processor.process_book(input_file, output_file)), input_file, output_file, original_filename, file.filename, config, time.time())
     return {"message": "Начата обработка файла", "task_id": id}
 
 @app.get("/tasks/{task_id}")
@@ -76,13 +109,15 @@ async def check_task_status(task_id: str):
     
     return {"is_completed": tasks[task_id][0].done()}
 
-@app.get("/tasks/{task_id}/result")
-async def get_task_result(task_id: str, background_tasks: BackgroundTasks):
+@app.post("/tasks/{task_id}/result")
+async def get_task_result(task_id: str, background_tasks: BackgroundTasks, final_text: str = Form(...)):
     if not task_id in tasks:
         raise HTTPException(status_code=404, detail="Задача не найдена")
     if not tasks[task_id][0].done():
         raise HTTPException(status_code=400, detail="Задача ещё не завершена")
 
+    file_handler = FileHandler(tasks[task_id][1].suffix[1:], tasks[task_id][5]).file_handler
+    file_handler.insert_text(OUTPUT_DIR / tasks[task_id][2], final_text, OUTPUT_DIR / tasks[task_id][2], )
     with zipfile.ZipFile(task_id + ".zip", 'w') as z:
         z.write(OUTPUT_DIR / tasks[task_id][2], arcname=tasks[task_id][3])
 
@@ -92,7 +127,7 @@ async def get_task_result(task_id: str, background_tasks: BackgroundTasks):
     background_tasks.add_task(lambda: tasks.pop(task_id))
     return FileResponse(
         path=task_id + ".zip",
-        filename=tasks[task_id][4],
+        filename=tasks[task_id][4].stem + "_rewritten.zip",
         media_type="application/zip"
     )
 

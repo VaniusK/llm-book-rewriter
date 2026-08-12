@@ -18,6 +18,9 @@
             --primary-hover: #1d4ed8;
             --success: #16a34a;
             --success-hover: #15803d;
+            --danger: #dc2626;
+            --danger-hover: #b91c1c;
+            --accent: #db2777;
             --radius: 8px;
         }
 
@@ -90,7 +93,7 @@
 
         textarea {
             width: 100%;
-            height: 260px;
+            height: 220px;
             padding: 12px;
             font-family: monospace, sans-serif;
             font-size: 0.875rem;
@@ -149,50 +152,6 @@
             background-color: var(--success-hover);
         }
 
-        .status-message {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            display: none;
-        }
-
-        .diff-section {
-            margin-top: 32px;
-            padding-top: 24px;
-            border-top: 1px solid var(--border-color);
-            display: none;
-        }
-
-        .diff-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-        }
-
-        .diff-header h2 {
-            font-size: 1.25rem;
-            font-weight: 600;
-        }
-
-        .diff-controls {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 16px;
-        }
-
-        .btn-sm {
-            padding: 6px 12px;
-            font-size: 0.85rem;
-        }
-
-        .btn-secondary {
-            background-color: #64748b;
-        }
-
-        .btn-secondary:hover {
-            background-color: #475569;
-        }
-
         .btn-outline {
             background-color: transparent;
             color: var(--text-main);
@@ -203,93 +162,258 @@
             background-color: #f1f5f9;
         }
 
-        .diff-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            max-height: 500px;
-            overflow-y: auto;
-            padding-right: 4px;
-            margin-bottom: 24px;
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.85rem;
         }
 
-        .diff-card {
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius);
-            padding: 12px 16px;
-            background-color: #ffffff;
+        .status-message {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            display: none;
+        }
+
+        /* Diff Section Outer Container */
+        .diff-workspace-container {
+            max-width: 1240px;
+            margin: 32px auto 0 auto;
+            display: none;
+        }
+
+        .diff-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 16px;
-            transition: border-color 0.2s, opacity 0.2s;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
         }
 
-        .diff-card.rejected {
-            opacity: 0.6;
+        .diff-header h2 {
+            font-size: 1.35rem;
+            font-weight: 600;
+        }
+
+        .hotkey-banner {
+            background-color: #f1f5f9;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 10px 16px;
+            margin-bottom: 20px;
+            font-size: 0.875rem;
+            color: #334155;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .hotkey-badge {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-family: monospace;
+            font-weight: 600;
+            font-size: 0.8rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .workspace-grid {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 24px;
+            align-items: start;
+        }
+
+        @media (max-width: 900px) {
+            .workspace-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Left Column: Document Viewer */
+        .document-viewer {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 32px;
+            min-height: 400px;
+            max-height: 75vh;
+            overflow-y: auto;
+            font-size: 1.05rem;
+            line-height: 1.8;
+            color: #1e293b;
+            white-space: pre-wrap;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        /* Inline Diffs */
+        .inline-diff {
+            display: inline;
+            padding: 2px 4px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .inline-diff .text-removed {
+            background-color: #fee2e2;
+            color: #991b1b;
+            padding: 1px 4px;
+            border-radius: 3px;
+            margin-right: 2px;
+            opacity: 1;
+            transition: opacity 0.2s ease;
+        }
+
+        .inline-diff .text-added {
+            background-color: #dcfce7;
+            color: #166534;
+            padding: 1px 4px;
+            border-radius: 3px;
+            opacity: 1;
+            transition: opacity 0.2s ease;
+        }
+
+        /* Status: Accepted (new chosen) */
+        .inline-diff.status-accepted .text-removed {
+            text-decoration: line-through;
+            opacity: 0.35;
+        }
+        .inline-diff.status-accepted .text-added {
+            opacity: 1;
+        }
+
+        /* Status: Rejected (old chosen) */
+        .inline-diff.status-rejected .text-removed {
+            opacity: 1;
+        }
+        .inline-diff.status-rejected .text-added {
+            text-decoration: line-through;
+            opacity: 0.35;
+        }
+
+        /* Active focus override: BOTH text elements return full opacity (1.0) while focused! */
+        .inline-diff.active {
+            outline: 2px solid var(--accent);
+            background-color: rgba(219, 39, 119, 0.12);
+            box-shadow: 0 0 8px rgba(219, 39, 119, 0.3);
+        }
+
+        .inline-diff.active .text-removed,
+        .inline-diff.active .text-added {
+            opacity: 1 !important;
+        }
+
+        /* Right Column: Diffs Sidebar */
+        .sidebar-diffs {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 75vh;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .sidebar-card {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .sidebar-card:hover {
+            border-color: #cbd5e1;
+        }
+
+        .sidebar-card.active {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(219, 39, 119, 0.2), 0 4px 12px rgba(0,0,0,0.05);
+            background-color: #fdf2f8;
+        }
+
+        .sidebar-card.status-rejected {
+            opacity: 0.7;
             background-color: #f8fafc;
         }
 
-        .diff-content {
-            flex: 1;
-            font-family: inherit;
-            font-size: 0.95rem;
-            line-height: 1.6;
-            word-break: break-word;
-            white-space: pre-wrap;
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 8px;
         }
 
-        .diff-context {
-            color: var(--text-muted);
+        .card-description {
+            font-size: 0.92rem;
+            font-weight: 500;
+            color: var(--text-main);
+            line-height: 1.4;
         }
 
-        .diff-removed {
-            background-color: #fee2e2;
-            color: #991b1b;
-            text-decoration: line-through;
-            padding: 2px 6px;
-            border-radius: 4px;
-            margin-right: 4px;
-            font-family: monospace;
+        .card-description em {
+            font-style: normal;
+            font-weight: 600;
         }
 
-        .diff-added {
-            background-color: #dcfce7;
-            color: #166534;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-family: monospace;
-        }
-
-        .diff-card-actions {
+        .card-actions {
             display: flex;
             gap: 6px;
             flex-shrink: 0;
         }
 
-        .btn-accept {
-            background-color: var(--success);
-        }
-        .btn-accept:hover {
-            background-color: var(--success-hover);
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            font-weight: bold;
+            border: 1px solid var(--border-color);
+            background-color: #ffffff;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.15s ease;
         }
 
-        .btn-reject {
-            background-color: #ef4444;
+        .btn-icon.accept:hover, .btn-icon.accept.active {
+            background-color: var(--success);
+            color: #ffffff;
+            border-color: var(--success);
         }
-        .btn-reject:hover {
-            background-color: #dc2626;
+
+        .btn-icon.reject:hover, .btn-icon.reject.active {
+            background-color: var(--danger);
+            color: #ffffff;
+            border-color: var(--danger);
+        }
+
+        .card-tag {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-style: italic;
         }
 
         .finish-container {
             display: flex;
             justify-content: flex-end;
-            margin-top: 16px;
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
 
+<!-- Main Form Card (Fixed max-width 760px) -->
 <div class="container">
     <h1>LLM Book Rewriter</h1>
     
@@ -326,19 +450,38 @@
             <button type="button" class="btn btn-success">Скачать результат</button>
         </a>
     </div>
+</div>
 
-    <div id="diffSection" class="diff-section">
-        <div class="diff-header">
-            <h2>Исправления в тексте</h2>
-        </div>
+<!-- Diff Review Workspace (Rendered outside main container card, max-width 1240px) -->
+<div id="diffSection" class="diff-workspace-container">
+    <div class="diff-header">
+        <h2>Исправления в тексте</h2>
         <div class="diff-controls">
             <button type="button" class="btn btn-sm btn-outline" id="acceptAllBtn">Принять все</button>
             <button type="button" class="btn btn-sm btn-outline" id="rejectAllBtn">Отклонить все</button>
         </div>
-        <div id="diffList" class="diff-list"></div>
-        <div class="finish-container">
-            <button type="button" id="finishEditButton" class="btn btn-success">Закончить редактирование</button>
+    </div>
+
+    <div class="hotkey-banner">
+        <div>
+            <strong>Горячие клавиши:</strong> 
+            <span class="hotkey-badge">A</span> / <span class="hotkey-badge">Y</span> / <span class="hotkey-badge">Enter</span> / <span class="hotkey-badge">→</span> Принять | 
+            <span class="hotkey-badge">R</span> / <span class="hotkey-badge">N</span> / <span class="hotkey-badge">Del</span> / <span class="hotkey-badge">←</span> Отклонить | 
+            <span class="hotkey-badge">↓</span> / <span class="hotkey-badge">J</span> Нав. | 
+            <span class="hotkey-badge">↑</span> / <span class="hotkey-badge">K</span> Пред.
         </div>
+    </div>
+
+    <div class="workspace-grid">
+        <!-- Left: Document continuous text viewer -->
+        <div id="documentViewer" class="document-viewer"></div>
+
+        <!-- Right: Diffs sidebar -->
+        <div id="sidebarDiffs" class="sidebar-diffs"></div>
+    </div>
+
+    <div class="finish-container">
+        <button type="button" id="finishEditButton" class="btn btn-success">Закончить редактирование</button>
     </div>
 </div>
 
@@ -346,7 +489,8 @@
     const button = document.getElementById('submitButton');
     const statusMessage = document.getElementById('statusMessage');
     const diffSection = document.getElementById('diffSection');
-    const diffListContainer = document.getElementById('diffList');
+    const documentViewer = document.getElementById('documentViewer');
+    const sidebarDiffs = document.getElementById('sidebarDiffs');
     const finishEditButton = document.getElementById('finishEditButton');
     const acceptAllBtn = document.getElementById('acceptAllBtn');
     const rejectAllBtn = document.getElementById('rejectAllBtn');
@@ -355,6 +499,7 @@
     let currentTaskId = null;
     let originalText = "";
     let diffItemsState = [];
+    let activeEditIndex = 0;
 
     async function onSubmit() {
         const fileField = document.querySelector('#fileInput');
@@ -427,12 +572,18 @@
             const diff_list = result.diff_list || [];
             originalText = result.original_text || "";
             
-            diffItemsState = diff_list.map(item => ({
+            diff_list.sort((a, b) => a.source_range[0] - b.source_range[0]);
+
+            // Status can be: 'unselected' (default), 'accepted', 'rejected'
+            diffItemsState = diff_list.map((item, idx) => ({
                 ...item,
-                accepted: true
+                id: idx,
+                status: 'unselected'
             }));
 
-            renderDiffList();
+            activeEditIndex = 0;
+            renderWorkspace();
+
             diffSection.style.display = 'block';
             statusMessage.style.display = 'none';
             button.disabled = false;
@@ -443,123 +594,208 @@
         }
     }
 
-    function renderDiffList() {
-        diffListContainer.innerHTML = '';
+    function renderWorkspace() {
+        renderDocumentViewer();
+        renderSidebar();
+        scrollToActiveEdit();
+    }
+
+    function renderDocumentViewer() {
+        documentViewer.innerHTML = '';
+        if (!originalText) return;
+
+        let currentPos = 0;
+
+        diffItemsState.forEach((item, index) => {
+            const [srcStart, srcEnd] = item.source_range;
+
+            if (srcStart > currentPos) {
+                const textChunk = originalText.slice(currentPos, srcStart);
+                documentViewer.appendChild(document.createTextNode(textChunk));
+            }
+
+            const span = document.createElement('span');
+            span.id = `inline-edit-${index}`;
+            span.className = `inline-diff status-${item.status} ${index === activeEditIndex ? 'active' : ''}`;
+            span.onclick = (e) => {
+                e.stopPropagation();
+                setActiveEdit(index);
+            };
+
+            if (item.text_removed) {
+                const remSpan = document.createElement('span');
+                remSpan.className = 'text-removed';
+                remSpan.textContent = item.text_removed;
+                span.appendChild(remSpan);
+            }
+
+            if (item.text_added) {
+                const addSpan = document.createElement('span');
+                addSpan.className = 'text-added';
+                addSpan.textContent = item.text_added;
+                span.appendChild(addSpan);
+            }
+
+            documentViewer.appendChild(span);
+            currentPos = srcEnd;
+        });
+
+        if (currentPos < originalText.length) {
+            documentViewer.appendChild(document.createTextNode(originalText.slice(currentPos)));
+        }
+    }
+
+    function renderSidebar() {
+        sidebarDiffs.innerHTML = '';
         if (diffItemsState.length === 0) {
-            diffListContainer.innerHTML = '<p class="hint">Изменений не обнаружено.</p>';
+            sidebarDiffs.innerHTML = '<p class="hint">Изменений не обнаружено.</p>';
             return;
         }
 
         diffItemsState.forEach((item, index) => {
             const card = document.createElement('div');
-            card.className = `diff-card ${item.accepted ? 'accepted' : 'rejected'}`;
+            card.id = `sidebar-card-${index}`;
+            card.className = `sidebar-card status-${item.status} ${index === activeEditIndex ? 'active' : ''}`;
+            card.onclick = () => setActiveEdit(index);
 
-            const contentDiv = document.createElement('div');
-            contentDiv.className = 'diff-content';
+            const header = document.createElement('div');
+            header.className = 'card-header';
 
-            const [srcStart, srcEnd] = item.source_range || [0, 0];
-            const ctxBeforeLength = 40;
-            const ctxAfterLength = 40;
+            const desc = document.createElement('div');
+            desc.className = 'card-description';
 
-            let prefix = "";
-            let suffix = "";
-
-            if (originalText) {
-                const beforeIdx = Math.max(0, srcStart - ctxBeforeLength);
-                prefix = originalText.slice(beforeIdx, srcStart);
-                if (beforeIdx > 0) prefix = "..." + prefix;
-
-                const afterIdx = Math.min(originalText.length, srcEnd + ctxAfterLength);
-                suffix = originalText.slice(srcEnd, afterIdx);
-                if (afterIdx < originalText.length) suffix = suffix + "...";
+            if (item.text_removed && item.text_added) {
+                desc.innerHTML = `Заменить <em>«${escapeHtml(item.text_removed)}»</em> на <em>«${escapeHtml(item.text_added)}»</em>`;
+            } else if (item.text_added) {
+                desc.innerHTML = `Добавить <em>«${escapeHtml(item.text_added)}»</em>`;
+            } else if (item.text_removed) {
+                desc.innerHTML = `Удалить <em>«${escapeHtml(item.text_removed)}»</em>`;
             }
 
-            if (prefix) {
-                const prefixSpan = document.createElement('span');
-                prefixSpan.className = 'diff-context';
-                prefixSpan.textContent = prefix;
-                contentDiv.appendChild(prefixSpan);
-            }
-
-            if (item.text_removed) {
-                const removedSpan = document.createElement('span');
-                removedSpan.className = 'diff-removed';
-                removedSpan.textContent = item.text_removed;
-                contentDiv.appendChild(removedSpan);
-            }
-
-            if (item.text_added) {
-                const addedSpan = document.createElement('span');
-                addedSpan.className = 'diff-added';
-                addedSpan.textContent = item.text_added;
-                contentDiv.appendChild(addedSpan);
-            }
-
-            if (suffix) {
-                const suffixSpan = document.createElement('span');
-                suffixSpan.className = 'diff-context';
-                suffixSpan.textContent = suffix;
-                contentDiv.appendChild(suffixSpan);
-            }
-
-            const actionsDiv = document.createElement('div');
-            actionsDiv.className = 'diff-card-actions';
+            const actions = document.createElement('div');
+            actions.className = 'card-actions';
 
             const acceptBtn = document.createElement('button');
             acceptBtn.type = 'button';
-            acceptBtn.className = `btn btn-sm ${item.accepted ? 'btn-accept' : 'btn-outline'}`;
-            acceptBtn.textContent = 'Принять';
-            acceptBtn.onclick = () => {
-                diffItemsState[index].accepted = true;
-                renderDiffList();
+            acceptBtn.className = `btn-icon accept ${item.status === 'accepted' ? 'active' : ''}`;
+            acceptBtn.title = 'Принять (A / Enter)';
+            acceptBtn.innerHTML = '✓';
+            acceptBtn.onclick = (e) => {
+                e.stopPropagation();
+                setAction(index, true);
             };
 
             const rejectBtn = document.createElement('button');
             rejectBtn.type = 'button';
-            rejectBtn.className = `btn btn-sm ${!item.accepted ? 'btn-reject' : 'btn-outline'}`;
-            rejectBtn.textContent = 'Отклонить';
-            rejectBtn.onclick = () => {
-                diffItemsState[index].accepted = false;
-                renderDiffList();
+            rejectBtn.className = `btn-icon reject ${item.status === 'rejected' ? 'active' : ''}`;
+            rejectBtn.title = 'Отклонить (R / Del)';
+            rejectBtn.innerHTML = '✕';
+            rejectBtn.onclick = (e) => {
+                e.stopPropagation();
+                setAction(index, false);
             };
 
-            actionsDiv.appendChild(acceptBtn);
-            actionsDiv.appendChild(rejectBtn);
+            actions.appendChild(rejectBtn);
+            actions.appendChild(acceptBtn);
 
-            card.appendChild(contentDiv);
-            card.appendChild(actionsDiv);
+            header.appendChild(desc);
+            header.appendChild(actions);
 
-            diffListContainer.appendChild(card);
+            card.appendChild(header);
+
+            sidebarDiffs.appendChild(card);
         });
     }
 
+    function setAction(index, accept) {
+        diffItemsState[index].status = accept ? 'accepted' : 'rejected';
+        if (diffItemsState.length > 0) {
+            activeEditIndex = Math.min(index + 1, diffItemsState.length - 1);
+        }
+        renderWorkspace();
+    }
+
+    function setActiveEdit(index) {
+        activeEditIndex = index;
+        renderWorkspace();
+    }
+
+    function scrollToActiveEdit() {
+        const activeInline = document.getElementById(`inline-edit-${activeEditIndex}`);
+        if (activeInline) {
+            activeInline.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        const activeCard = document.getElementById(`sidebar-card-${activeEditIndex}`);
+        if (activeCard) {
+            activeCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+
+    function escapeHtml(text) {
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
     acceptAllBtn.addEventListener('click', () => {
-        diffItemsState.forEach(item => item.accepted = true);
-        renderDiffList();
+        diffItemsState.forEach(item => item.status = 'accepted');
+        renderWorkspace();
     });
 
     rejectAllBtn.addEventListener('click', () => {
-        diffItemsState.forEach(item => item.accepted = false);
-        renderDiffList();
+        diffItemsState.forEach(item => item.status = 'rejected');
+        renderWorkspace();
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+            return;
+        }
+
+        if (diffSection.style.display !== 'block' || diffItemsState.length === 0) {
+            return;
+        }
+
+        const key = e.key.toLowerCase();
+
+        if (key === 'a' || key === 'y' || e.key === 'Enter' || e.key === 'ArrowRight') {
+            e.preventDefault();
+            setAction(activeEditIndex, true);
+        } else if (key === 'r' || key === 'n' || e.key === 'Delete' || e.key === 'Backspace' || e.key === 'ArrowLeft') {
+            e.preventDefault();
+            setAction(activeEditIndex, false);
+        } else if (key === 'j' || e.key === 'ArrowDown') {
+            e.preventDefault();
+            activeEditIndex = Math.min(activeEditIndex + 1, diffItemsState.length - 1);
+            renderWorkspace();
+        } else if (key === 'k' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            activeEditIndex = Math.max(0, activeEditIndex - 1);
+            renderWorkspace();
+        }
     });
 
     function constructFinalText() {
         if (!originalText) {
-            return diffItemsState.map(item => item.accepted ? item.text_added : item.text_removed).join('');
+            return diffItemsState.map(item => item.status !== 'rejected' ? item.text_added : item.text_removed).join('');
         }
 
-        const sortedDiffs = [...diffItemsState].sort((a, b) => a.source_range[0] - b.source_range[0]);
         let result = "";
         let currentPos = 0;
 
-        for (const item of sortedDiffs) {
+        diffItemsState.forEach(item => {
             const [srcStart, srcEnd] = item.source_range;
             if (srcStart > currentPos) {
                 result += originalText.slice(currentPos, srcStart);
             }
-            result += item.accepted ? item.text_added : item.text_removed;
+            // By default (or if accepted), use text_added. If rejected, keep text_removed.
+            result += (item.status !== 'rejected') ? item.text_added : item.text_removed;
             currentPos = srcEnd;
-        }
+        });
 
         if (currentPos < originalText.length) {
             result += originalText.slice(currentPos);
@@ -578,16 +814,29 @@
 
         try {
             const formData = new FormData();
-            formData.append('text', finalResultText);
-            formData.append('edited_text', finalResultText);
+            formData.append('final_text', finalResultText);
 
             const response = await fetch(`/tasks/${currentTaskId}/result`, {
                 method: 'POST',
                 body: formData
             });
 
+            if (!response.ok) {
+                throw new Error('Ошибка сервера при сохранении результата: ' + response.status);
+            }
+
+            // Extract original filename from server Content-Disposition header
+            const disposition = response.headers.get('Content-Disposition');
+            let filename = 'result.zip';
+            if (disposition) {
+                const match = disposition.match(/filename\*?=(?:UTF-8'')?["']?([^"';]+)["']?/i);
+                if (match && match[1]) {
+                    filename = decodeURIComponent(match[1]);
+                }
+            }
+
             const blob = await response.blob();
-            downloadBlob(blob, 'result.zip');
+            downloadBlob(blob, filename);
         } catch (err) {
             alert('Ошибка при скачивании результата: ' + err.message);
         } finally {
