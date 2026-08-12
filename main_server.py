@@ -3,7 +3,7 @@ from starlette.staticfiles import StaticFiles
 import logging
 import asyncio
 from uuid import uuid4
-from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks, Form
+from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks, Form, Request
 from fastapi.responses import FileResponse
 import zipfile
 import io
@@ -37,6 +37,8 @@ OUTPUT_DIR = Path("output_books")
 INPUT_DIR = Path("input_books")
 INPUT_DIR.mkdir(parents=True, exist_ok=True)
 PROCESSING_TIMEOUT_SECONDS = 3600
+MAX_CONCURRENT_TASKS_PER_IP = 3
+MAX_CONCURRENT_TASKS = 100
 
 def remove_file(path: Path):
     if os.path.exists(path):
@@ -74,11 +76,16 @@ app = FastAPI(lifespan=lifespan)
 
 
 @app.post("/process/file")
-async def process_file(config_str: str = Form(...), file: UploadFile = File(...)):
+async def process_file(request: Request, config_str: str = Form(...), file: UploadFile = File(...)):
     config_tmp = json.loads(config_str)
     config = deep_merge_dicts(config_tmp, load_config(Path(config_local_filename)))
     if not file.filename.endswith('.zip'):
         raise HTTPException(status_code=400, detail="Разрешены только файлы с расширением .zip")
+    client_ip = request.client.host
+    if len([task_id for task_id in tasks if tasks[task_id][7] == client_ip]) > MAX_CONCURRENT_TASKS:
+        raise HTTPException(status_code=429, detail="Превышен лимит на количество одновременных задач от одного IP")
+    if len(tasks) > MAX_CONCURRENT_TASKS:
+        raise HTTPException(status_code=429, detail="Сервер перегружен")
     zip_properties = await file.read()
     original_filename = None
     id = str(uuid4())
@@ -101,7 +108,7 @@ async def process_file(config_str: str = Form(...), file: UploadFile = File(...)
         book_processor = BookProcessor(config, ext)
         input_file = INPUT_DIR / Path(id + "." + ext)
         output_file = Path(f"{id}_rewritten." + ext)
-        tasks[id] = (asyncio.create_task(book_processor.process_book(input_file, output_file)), input_file, output_file, original_filename, Path(file.filename), config, time.time())
+        tasks[id] = (asyncio.create_task(book_processor.process_book(input_file, output_file)), input_file, output_file, original_filename, Path(file.filename), config, time.time(), client_ip)
     return {"message": "Начата обработка файла", "task_id": id}
 
 @app.get("/tasks/{task_id}")
