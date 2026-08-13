@@ -14,3 +14,4 @@ config_local.yaml
 *.png
 /book_temp
 *.fb2
+misc/certbot
