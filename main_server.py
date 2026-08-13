@@ -82,7 +82,7 @@ async def process_file(request: Request, config_str: str = Form(...), file: Uplo
     if not file.filename.endswith('.zip'):
         raise HTTPException(status_code=400, detail="Разрешены только файлы с расширением .zip")
     client_ip = request.client.host
-    if len([task_id for task_id in tasks if tasks[task_id][7] == client_ip]) > MAX_CONCURRENT_TASKS:
+    if len([task_id for task_id in tasks if tasks[task_id][7] == client_ip]) > MAX_CONCURRENT_TASKS_PER_IP:
         raise HTTPException(status_code=429, detail="Превышен лимит на количество одновременных задач от одного IP")
     if len(tasks) > MAX_CONCURRENT_TASKS:
         raise HTTPException(status_code=429, detail="Сервер перегружен")

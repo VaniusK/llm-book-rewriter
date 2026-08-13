@@ -3,6 +3,7 @@ output_books
 input_books
 pydantic_core
 __pycache__
+.env
 /.idea
 /build
 /dist

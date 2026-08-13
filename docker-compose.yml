@@ -5,3 +5,9 @@ services:
       dockerfile: WebsiteDockerfile
     ports:
       - "8000:8000"
+  bot:
+    build: 
+      context: .
+      dockerfile: BotDockerfile
+    env_file:
+      - .env

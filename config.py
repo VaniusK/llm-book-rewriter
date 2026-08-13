@@ -23,6 +23,7 @@ def deep_merge_dicts(base_dict: dict[any, any], override_dict: dict[any, any]):
 
 config_filename = "config.yaml"
 config_local_filename = "config_local.yaml"
+config_default_filename = "config_default.yaml"
 
 
 
