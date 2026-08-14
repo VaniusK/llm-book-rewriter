@@ -25,6 +25,7 @@ services:
     depends_on:
       - website
       - bot
+      - certbot
   
   certbot:
     image: certbot/certbot
