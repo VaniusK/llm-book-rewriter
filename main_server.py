@@ -172,6 +172,7 @@ async def get_task_diff(task_id: str):
     chars2 = tokens_to_chars(tokens2)
     
     dmp = dmp_module.diff_match_patch()
+    dmp.Diff_Timeout = 0.0 
     diffs_chars = dmp.diff_main(chars1, chars2, False) 
     
     raw_diffs = []
