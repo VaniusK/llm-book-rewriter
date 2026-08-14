@@ -150,7 +150,7 @@ async def get_task_diff(task_id: str):
     file_handler = FileHandler(tasks[task_id][1].suffix[1:], tasks[task_id][5]).file_handler
     original_text = file_handler.extract_text(tasks[task_id][1])
     processed_text = file_handler.extract_text(OUTPUT_DIR / tasks[task_id][2])
-    pattern = re.compile(r'\w+|\s+|[^\w\s]+')
+    pattern = re.compile(r'<[^>]+>|\w+|\s+|[^\w\s]+')
     tokens1 = pattern.findall(original_text)
     tokens2 = pattern.findall(processed_text)
     
