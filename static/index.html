@@ -423,7 +423,16 @@
 
     <!-- Main Form Card (Fixed max-width 760px) -->
     <div class="container">
-        <h1>LLM Book Rewriter</h1>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; border-bottom: 1px solid var(--border-color); padding-bottom: 16px;">
+            <div>
+                <h1 style="margin-bottom: 6px;">LLM Book Rewriter</h1>
+                <p style="font-size: 0.875rem; color: var(--text-muted);">Запускайте приватно на своем компьютере или сервере.</p>
+            </div>
+            <a href="https://github.com/VaniusK/llm-book-rewriter" target="_blank" class="btn btn-outline btn-sm" style="display: inline-flex; align-items: center; gap: 6px; text-decoration: none;">
+                <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.28.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
+                GitHub
+            </a>
+        </div>
 
         <div class="form-group">
             <label for="fileInput">Выберите книгу</label>
@@ -436,6 +445,7 @@
             <label for="promptTextarea">Промпт для нейросети</label>
             <div class="hint">Параметр <code>{text_chunk}</code> автоматически заменяется на фрагмент текста и должен
                 встречаться ровно один раз.</div>
+            <div class="hint" style="color: #dc2626; margin-top: 4px;">Промпт теряется при перезагрузке страницы, так что свой промпт лучше сохранять где-то у себя.</div>
             <textarea id="promptTextarea">**Инструкции**
 1. Исправьте все орфографические ошибки и опечатки.
 2. Исправьте пунктуационные и грамматические ошибки, особое внимание уделяя сложным случаям.
@@ -482,6 +492,11 @@
                 <span class="hotkey-badge">↓</span> / <span class="hotkey-badge">J</span> Нав. |
                 <span class="hotkey-badge">↑</span> / <span class="hotkey-badge">K</span> Пред.
             </div>
+        </div>
+
+        <div style="background-color: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius); padding: 8px 16px; margin-bottom: 16px; font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center; gap: 8px;">
+            <span>💡</span>
+            <span>Не волнуйтесь из-за XML-тегов в тексте — это внутренняя структура файла, итоговый результат будет выглядеть нормально.</span>
         </div>
 
         <div class="workspace-grid">
@@ -548,7 +563,7 @@
                 console.log('Ответ от сервера:', result);
                 currentTaskId = result.task_id;
 
-                statusMessage.textContent = 'Файл обрабатывается в фоновом режиме... Проверяем статус.';
+                statusMessage.textContent = 'Файл обрабатывается в фоновом режиме (пожалуйста, не перезагружайте страницу)... Проверяем статус.';
                 statusPollingInterval = setInterval(() => checkTaskStatus(currentTaskId), 5000);
             } catch (err) {
                 alert('Произошла ошибка при отправке: ' + err.message);
