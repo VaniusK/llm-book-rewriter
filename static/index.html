@@ -434,6 +434,17 @@
             </a>
         </div>
 
+        <div style="background: linear-gradient(135deg, #fef3c7, #fef9c3); border: 1px solid #f59e0b; border-radius: var(--radius); padding: 14px 18px; margin-bottom: 24px; font-size: 0.875rem; color: #92400e; line-height: 1.6;">
+            <div style="display: flex; align-items: flex-start; gap: 10px;">
+                <span style="font-size: 1.1rem; flex-shrink: 0; margin-top: 1px;">⚠️</span>
+                <div>
+                    <strong style="display: block; margin-bottom: 4px; color: #78350f;">Приватность данных</strong>
+                    Загруженные файлы обрабатываются на сервере и автоматически удаляются после завершения. Однако это демо-сервер, а не защищённый production-сервис: ваши данные проходят через стороннюю инфраструктуру (Yandex Cloud) и&nbsp;отправляются в&nbsp;LLM&nbsp;API. Полная конфиденциальность не&nbsp;гарантируется.
+                    Для работы с&nbsp;чувствительными текстами рекомендуем <a href="https://github.com/VaniusK/llm-book-rewriter" target="_blank" style="color: #92400e; font-weight: 600; text-decoration: underline;">запустить проект локально</a>.
+                </div>
+            </div>
+        </div>
+
         <div class="form-group">
             <label for="fileInput">Выберите книгу</label>
             <div class="hint">Архив <code>.zip</code>, внутри которого находится <code>.txt</code>, <code>.fb2</code>
