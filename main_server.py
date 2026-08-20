@@ -7,6 +7,7 @@ from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks, F
 from fastapi.responses import FileResponse
 import zipfile
 import io
+import sys
 import os
 from pathlib import Path
 import json
@@ -17,6 +18,7 @@ import diff_match_patch as dmp_module
 import time
 import re
 from contextlib import asynccontextmanager
+import uvicorn
 
 
 logging.basicConfig(
@@ -39,6 +41,8 @@ INPUT_DIR.mkdir(parents=True, exist_ok=True)
 PROCESSING_TIMEOUT_SECONDS = 3600
 MAX_CONCURRENT_TASKS_PER_IP = 3
 MAX_CONCURRENT_TASKS = 100
+IS_EXE = getattr(sys, 'frozen', False)
+BASE_PATH = Path(sys._MEIPASS if IS_EXE else os.path.dirname(__file__))
 
 def remove_file(path: Path):
     if os.path.exists(path):
@@ -78,7 +82,7 @@ app = FastAPI(lifespan=lifespan)
 @app.post("/process/file")
 async def process_file(request: Request, config_str: str = Form(...), file: UploadFile = File(...)):
     config_tmp = json.loads(config_str)
-    config = deep_merge_dicts(config_tmp, load_config(Path(config_local_filename)))
+    config = deep_merge_dicts(config_tmp, load_config(BASE_PATH / Path(config_local_filename)))
     if not file.filename.endswith('.zip'):
         raise HTTPException(status_code=400, detail="Разрешены только файлы с расширением .zip")
     client_ip = request.client.host
@@ -238,4 +242,8 @@ async def get_task_diff(task_id: str):
             i += 1
     return {"diff_list": diff_list, "original_text": original_text, "processed_text": processed_text}
 
-app.mount("/", StaticFiles(directory="static", html=True), name="static")
+app.mount("/", StaticFiles(directory=str(BASE_PATH / "static"), html=True), name="static")
+
+if __name__ == "__main__":
+    if IS_EXE:
+        uvicorn.run(app, host="0.0.0.0", port=8000, forwarded_allow_ips="127.0.0.1")
