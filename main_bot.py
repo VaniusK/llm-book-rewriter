@@ -51,6 +51,8 @@ def clean_directories():
         remove_file(file)
     for file in Path(OUTPUT_DIR).iterdir():
         remove_file(file)
+    for file in Path("book_temp").iterdir():
+        remove_file(file)
 
 async def cleanup_task():
     while True:
