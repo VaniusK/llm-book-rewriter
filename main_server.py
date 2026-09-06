@@ -43,7 +43,7 @@ PROCESSING_TIMEOUT_SECONDS = 3600 * 3
 MAX_CONCURRENT_TASKS_PER_IP = 3
 MAX_CONCURRENT_TASKS = 100
 IS_EXE = getattr(sys, 'frozen', False)
-BASE_PATH = Path(sys._MEIPASS if IS_EXE else os.path.dirname(__file__))
+BASE_PATH = Path(sys._MEIPASS if IS_EXE else os.path.dirname(os.path.abspath(__file__)))
 
 def remove_file(path: Path):
     if os.path.exists(path):
