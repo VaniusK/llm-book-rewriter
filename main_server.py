@@ -87,7 +87,7 @@ app = FastAPI(lifespan=lifespan)
 @app.post("/process/file")
 async def process_file(request: Request, config_str: str = Form(...), file: UploadFile = File(...)):
     config_tmp = json.loads(config_str)
-    config = deep_merge_dicts(config_tmp, load_config(BASE_PATH / Path(config_local_filename)))
+    config = deep_merge_dicts(config_tmp, load_config(Path(config_local_filename)))
     if not file.filename.endswith('.zip'):
         raise HTTPException(status_code=400, detail="Разрешены только файлы с расширением .zip")
     client_ip = request.client.host
