@@ -35,6 +35,7 @@ SUPPORTED_EXTENSIONS = ["fb2", "txt", "docx"]
 OUTPUT_DIR = Path("output_books")
 INPUT_DIR = Path("input_books")
 INPUT_DIR.mkdir(parents=True, exist_ok=True)
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 PROCESSING_TIMEOUT_SECONDS = 3600 * 3
 MAX_CONCURRENT_TASKS_PER_USER = 3
 MAX_CONCURRENT_TASKS = 100
