@@ -37,8 +37,10 @@ MAX_FILE_SIZE = 1024 * 1024 * 10
 SUPPORTED_EXTENSIONS = ["fb2", "txt", "docx"]
 OUTPUT_DIR = Path("output_books")
 INPUT_DIR = Path("input_books")
+BOOK_TEMP_DIR = Path("book_temp")
 INPUT_DIR.mkdir(parents=True, exist_ok=True)
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+BOOK_TEMP_DIR.mkdir(parents=True, exist_ok=True)
 PROCESSING_TIMEOUT_SECONDS = 3600 * 3
 MAX_CONCURRENT_TASKS_PER_IP = 3
 MAX_CONCURRENT_TASKS = 100
@@ -57,7 +59,7 @@ def clean_directories():
         remove_file(file)
     for file in Path(OUTPUT_DIR).iterdir():
         remove_file(file)
-    for file in Path("book_temp").iterdir():
+    for file in Path(BOOK_TEMP_DIR).iterdir():
         remove_file(file)
 
 async def cleanup_task():
